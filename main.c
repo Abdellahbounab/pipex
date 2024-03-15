@@ -7,13 +7,12 @@ int main(int av, char **ac)
 
     if (av == 5)
     {
-        \\understanding the concept of pipe
-        \\checking on errors that can occurs
-        \\handle the errors
-        \\start coding journey
-        \\debugging
-        \\checking and testing
-        \\few more learnings
-        \\applying the project
+		// learn fork()
+		// learn pipe()
+		// file manupilation : read() & write() & open() & close()
+		// command excution : execvp() & execve()
+		// error handling
+		// 
+
     }
 }
