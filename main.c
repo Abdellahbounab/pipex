@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <stdlib.h>
 
 
@@ -13,8 +14,10 @@
 typedef struct s_data{
     char *cmd_path;
     char *cmd_flags;
+	char **arr_cmd;
 	char *cmd;
 	int parent;//t_pid
+	int fd[2];
 	struct s_data *next;
 }   t_data;
 
@@ -26,6 +29,20 @@ int ft_strlen(char *s)
 	while (s && s[i++])
 		;
 	return (i - 1);
+}
+
+char	**free_arr(char ***array)
+{
+	int	i;
+
+	i = 0;
+	while (array && *array && (*array)[i])
+	{
+		free((*array)[i]);
+		i++;
+	}
+	free(*array);
+	return (NULL);
 }
 
 char	*ft_strjoin(char const *s1, char const *s2)
@@ -64,6 +81,7 @@ int free_list(t_data **head)
 	while (*head)
 	{
 		tmp = (*head)->next;
+		free_arr(&(*head)->arr_cmd);
 		free(*head);
 		*head = tmp;
 	}
@@ -158,20 +176,6 @@ char	**free_split(char ***array, int index)
 	return (NULL);
 }
 
-char	**free_arr(char ***array)
-{
-	int	i;
-
-	i = 0;
-	while (array && *array && (*array)[i])
-	{
-		free((*array)[i]);
-		i++;
-	}
-	free(*array);
-	return (NULL);
-}
-
 char	**ft_split(char const *s, char c)
 {
 	char	**array;
@@ -257,13 +261,17 @@ t_data *get_cmd(char **arr, char *paths)
 		if (node)
 		{
 			node->cmd_path = ft_strdup(path_arr[index_path]);
-			free_arr(&path_arr);//seg buffer-overflow
+			free_arr(&path_arr);
 			if (!node->cmd_path)
 				return (free(updated), free(node), NULL);
 			node->cmd = ft_strjoin(node->cmd_path, updated);
 			if (!node->cmd)
 				return (free(updated), free(node->cmd_path), free(node), NULL);
+			node->arr_cmd = arr;
+			node->parent = 0;
 			node->cmd_flags = get_flags(arr);
+			if (pipe(node->fd) == -1)
+				return (free(updated), free(node->cmd_path), free(node), NULL);
 			node->next = NULL;
 			return (free(updated), node);
 		}
@@ -303,6 +311,19 @@ void	add_back_list(t_data **lst, t_data *new)
 	}
 }
 
+int strlen_lst(t_data *head)
+{
+	int len;
+
+	len = 0;
+	while (head)
+	{
+		head = head->next;
+		len++;
+	}
+	return (len);
+}
+
 int correct_commandes(char **argv, int len, t_data **head, char **env)
 {
     int i;
@@ -318,7 +339,6 @@ int correct_commandes(char **argv, int len, t_data **head, char **env)
     {
         arr = ft_split(argv[i], ' ');
         node = get_cmd(arr, path);
-		free_arr(&arr);
 		if (!node)
 			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
 		add_back_list(head, node);
@@ -348,69 +368,109 @@ int correct_files(char *file_in, char *file_out)
     return (0);
 }
 
-void pipe_all(int ***fd, int len)
+void pipe_all(t_data **head)
+{
+	int in_tmp;
+	t_data *cpy;
+
+	cpy = *head;
+	in_tmp = -1;
+	while (cpy)
+	{
+		if (in_tmp != -1)
+			cpy->fd[0] = in_tmp;
+		else
+		{
+			in_tmp = cpy->fd[0];
+			cpy->fd[0] = 0;
+		}
+		if (!cpy->next)
+		{
+			close(cpy->fd[1]);
+			cpy->fd[1] = 1;
+		}
+		cpy = cpy->next;
+	}
+}
+
+void	close_fd(t_data **head)
+{
+	t_data *cpy;
+
+	cpy = *head;
+	while (cpy)
+	{
+		close(cpy->fd[0]);
+		close(cpy->fd[1]);
+	}
+}
+void read_arr(char **arr)
 {
 	int i;
 
 	i = 0;
-	while (i < len)
+	while (arr[i])
 	{
-		if (pipe((*fd)[i]) == -1)
-			ft_errno();
+		printf("arr[%d] = %s\n", i, arr[i]);
 		i++;
 	}
 }
 
-void	close_fd(int ***fd, int len)
+void	processing(t_data *cpy, t_data *head_cmd)
 {
-	int i;
-
-	i = 0;
-	while (i < len)
-	{
-		close(*fd[i][0]);
-		close(*fd[i][1]);
-		i++;
-	}
-}
-
-void	processing(int *fd, t_data **head_cmd, t_data *head)
-{
-	if (head != *head_cmd || (*head_cmd)->next)
-	{
-
-	}
+	if (cpy == head_cmd)
+		dup2(1, cpy->fd[1]);
+	else if (!cpy->next)
+		dup2(0, cpy->fd[0]);
 	else
 	{
-		close(fd[1]);
-		dup2(0, fd[0]);
-		dup2(1, fd[1]);
+		dup2(0, cpy->fd[0]);
+		dup2(1, cpy->fd[1]);
 	}
-	// input(read) from fd[1] tha is 0 now
-	//	write to output
+	printf("cmd :(%s)\n/", cpy->cmd);
+	read_arr(cpy->arr_cmd);
+	if (execv(cpy->cmd, cpy->arr_cmd) == -1)
+		ft_errno();
+	close(cpy->fd[0]);
+	close(cpy->fd[1]);
 }
+
+void	last_process(t_data **head_cmd)
+{
+	t_data *cpy;
+	t_data *tmp;
+
+	cpy = *head_cmd;
+	while (cpy->next)
+	{
+		printf("pid(%d)\n", cpy->parent);
+		if (cpy->parent)
+			waitpid(cpy->parent, NULL, 0);
+		cpy = cpy->next;
+	}
+}
+
 
 // have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
 void	processing_cmds(t_data **head_cmd)
 {
-	int fd[strlen_lst(*head_cmd) - 1][2];
 	t_data *cpy;
 	int i;
 	int pid;
 
 	cpy = *head_cmd;
 	i = 0;
-	pipe_all(&fd, strlen_lst(*head_cmd) - 1);
-	while (cpy->next)
+	pipe_all(head_cmd);
+	while (cpy)
 	{
 		pid = fork();
 		if (pid != -1 && !pid)
-			processing(fd[i], cpy, *head_cmd);
+			processing(cpy, *head_cmd);
 		else if (pid != -1 && pid)
 			cpy->parent = pid;
 		else if (pid == -1)
 		{
-			close_fd(&fd, ft_strlen(*head_cmd) - 1);
+			close_fd(head_cmd);
 			free_list(head_cmd);
 			ft_errno();
 		}
@@ -418,6 +478,7 @@ void	processing_cmds(t_data **head_cmd)
 		i++;
 	}
 	last_process(head_cmd);
+
 }
 
 
