@@ -360,6 +360,7 @@ void	child_process(int *fd, t_data **head)
 	// and write to fd[0] that is 1 now
 }
 
+// have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
 // void	processing_cmds(t_data **head_cmd)
 // {
 // 	int fd[2];
