@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <stdlib.h>
 
 
@@ -13,6 +14,7 @@ typedef struct s_data{
     char *cmd_path;
     char *cmd_flags;
 	char *cmd;
+	int parent;//t_pid
 	struct s_data *next;
 }   t_data;
 
@@ -161,7 +163,7 @@ char	**free_arr(char ***array)
 	int	i;
 
 	i = 0;
-	while (array && *array && *array[i])
+	while (array && *array && (*array)[i])
 	{
 		free((*array)[i]);
 		i++;
@@ -211,14 +213,14 @@ int check_path(char *str ,char **paths)
 		{
 			cpy = ft_strjoin(paths[i], str);
 			if (access(cpy, X_OK) != -1)
-				return (free(cpy), free(str), i);
+				return (free(cpy), i);
 			free(cpy);
 			cpy = NULL;
 			i++;
 		}
-		return (free(str), -1);
+		return (-1);
 	}
-	return (free(str), -1);
+	return (-1);
 }
 
 char *get_flags(char **arr)
@@ -228,7 +230,7 @@ char *get_flags(char **arr)
 	char *cpy;
 
 	if (arr[i])
-		str = ft_strdup(arr[i]);
+		str = ft_strdup(arr[i++]);
 	while (str && arr && arr[i])
 	{
 		cpy = str;
@@ -262,6 +264,7 @@ t_data *get_cmd(char **arr, char *paths)
 			if (!node->cmd)
 				return (free(updated), free(node->cmd_path), free(node), NULL);
 			node->cmd_flags = get_flags(arr);
+			node->next = NULL;
 			return (free(updated), node);
 		}
 		else
@@ -344,47 +347,88 @@ int correct_files(char *file_in, char *file_out)
 	}
     return (0);
 }
-void	parent_process(int *fd, t_data **head_cmd)
+
+void pipe_all(int ***fd, int len)
 {
-	close(fd[0]);
-	dup2(0, fd[1]);
+	int i;
+
+	i = 0;
+	while (i < len)
+	{
+		if (pipe((*fd)[i]) == -1)
+			ft_errno();
+		i++;
+	}
+}
+
+void	close_fd(int ***fd, int len)
+{
+	int i;
+
+	i = 0;
+	while (i < len)
+	{
+		close(*fd[i][0]);
+		close(*fd[i][1]);
+		i++;
+	}
+}
+
+void	processing(int *fd, t_data **head_cmd, t_data *head)
+{
+	if (head != *head_cmd || (*head_cmd)->next)
+	{
+
+	}
+	else
+	{
+		close(fd[1]);
+		dup2(0, fd[0]);
+		dup2(1, fd[1]);
+	}
 	// input(read) from fd[1] tha is 0 now
 	//	write to output
 }
 
-void	child_process(int *fd, t_data **head)
+// have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
+void	processing_cmds(t_data **head_cmd)
 {
-	close(fd[1]);
-	dup2(1, fd[0]);
-	// input(read) from '0'
-	// and write to fd[0] that is 1 now
+	int fd[strlen_lst(*head_cmd) - 1][2];
+	t_data *cpy;
+	int i;
+	int pid;
+
+	cpy = *head_cmd;
+	i = 0;
+	pipe_all(&fd, strlen_lst(*head_cmd) - 1);
+	while (cpy->next)
+	{
+		pid = fork();
+		if (pid != -1 && !pid)
+			processing(fd[i], cpy, *head_cmd);
+		else if (pid != -1 && pid)
+			cpy->parent = pid;
+		else if (pid == -1)
+		{
+			close_fd(&fd, ft_strlen(*head_cmd) - 1);
+			free_list(head_cmd);
+			ft_errno();
+		}
+		cpy = cpy->next;
+		i++;
+	}
+	last_process(head_cmd);
 }
 
-// have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
-// void	processing_cmds(t_data **head_cmd)
-// {
-// 	int fd[2];
-// 	t_pid pid;
 
-// 	if (head_cmd && pipe(fd) != -1)
-// 	{
-// 		pid = fork();
-// 		if (pid != -1 && !pid)
-// 			child_process(fd, head_cmd);//	when getting  it as a child process and head ++ after freeing the past
-// 		else if (pid != -1 && pid)
-// 		{
-// 			wait(NULL);
-// 			parent_process(fd, head_cmd);
-// 		}
-// 		else if (pid == -1)
-// 		{
-// 			free_list(head_cmd);
-// 			close_fd(fd[0], fd[1]);
-// 			ft_errno();
-// 		}
-// 	}
-// }
-
+void read_lst(t_data *lst)
+{
+	while (lst)
+	{
+		printf("(%s, %s, %s)\n", lst->cmd_path, lst->cmd, lst->cmd_flags);
+		lst = lst -> next;
+	}
+}
 
 int main(int ac, char **av, char **env)
 {
@@ -396,8 +440,7 @@ int main(int ac, char **av, char **env)
         if (correct_files(av[1], av[ac - 1]))
 		{
             if (correct_commandes(av, ac - 1, &head_cmd, env))
-					// processing_cmds(&head_cmd);
-					printf("done parsing");
+					processing_cmds(&head_cmd);
 		}
 		else
 			// ft_errno();
