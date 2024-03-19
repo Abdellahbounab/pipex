@@ -99,7 +99,7 @@ static int	ft_strsdup(char **array, const char *s, int len) //ft_split
 	return (1);
 }
 
-char	*ft_strdup(char *s) //ft_split
+char	*ft_strdup(char *s)
 {
 	int		i;
 	int		len;
@@ -165,17 +165,19 @@ int check_path(char *str ,char **paths)
 {
 	int i;
 	char *cpy;
-	char **arr;
 
 	i = 0;
 	if (str && paths)
 	{
-		while (arr[i])
+		while (paths[i])
 		{
 			cpy = ft_strjoin(str, paths[i]);
 			if (access(cpy, X_OK) != -1)
-				return (free_arr(paths) ,cpy);
+				return (free(cpy), i);
+			free(cpy);
+			cpy = NULL;
 		}
+		return (-1);
 	}
 	return (-1);
 }
@@ -193,8 +195,11 @@ t_data *get_cmd(char **arr, char *paths)
 		node = (t_data *) malloc (sizeof(t_data));
 		if (node)
 		{
-			node->cmd_path = paths[index_path];
-			node->cmd = arr[0];
+			node->cmd_path = ft_strdup(path_arr[index_path]);
+			free_arr(path_arr);
+			if (!node->cmd_path)
+				return (NULL);
+			node->cmd = arr[0];//do i have to strdup it
 			node->cmd_flags = arr[1];
 			return (node);
 		}
