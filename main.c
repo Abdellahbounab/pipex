@@ -21,9 +21,32 @@ int ft_strlen(char *s)
 	int	i;
 
 	i = 0;
-	while (s[i++])
+	while (s && s[i++])
 		;
 	return (i - 1);
+}
+
+char	*ft_strjoin(char const *s1, char const *s2)
+{
+	char	*joined;
+	size_t	total_len;
+	size_t	i;
+
+	i = 0;
+	total_len = ft_strlen((char *)s1) + ft_strlen((char *)s2);
+	joined = (char *) malloc(sizeof(char) * total_len + 1);
+	if (!joined)
+		return (NULL);
+	while (i < total_len)
+	{
+		if (*s1)
+			*(joined + i) = *((char *)s1++);
+		else
+			*(joined + i) = *((char *)s2++);
+		i++;
+	}
+	*(joined + i) = 0;
+	return (joined);
 }
 
 void ft_errno()
@@ -50,12 +73,13 @@ int	ft_strncmp(char *str, char *cmp, int len)
 	int	i;
 
 	i = 0;
-	while (i < len)
+	while (str && cmp && i < len)
 	{
 		if (str[i] != cmp[i])
 			return (0);
 		i++;
 	}
+	i--;
 	if (!(str[i] - cmp[i]))
 		return (1);
 	return (0);
@@ -121,13 +145,27 @@ char	*ft_strdup(char *s)
 	return (0);
 }
 
-char	**free_arr(char ***array, int index)
+char	**free_split(char ***array, int index)
 {
 	int	i;
 
 	i = 0;
 	while (i < index)
 		free((*array)[i++]);
+	free(*array);
+	return (NULL);
+}
+
+char	**free_arr(char ***array)
+{
+	int	i;
+
+	i = 0;
+	while (array && *array && *array[i])
+	{
+		free((*array)[i]);
+		i++;
+	}
 	free(*array);
 	return (NULL);
 }
@@ -155,7 +193,7 @@ char	**ft_split(char const *s, char c)
 			s++;
 		}
 		if (!ft_strsdup(&array[i], s - len, len))
-			return (free_arr(&array, i));
+			return (free_split(&array, i));
 	}
 	array[words] = 0;
 	return (array);
@@ -171,43 +209,66 @@ int check_path(char *str ,char **paths)
 	{
 		while (paths[i])
 		{
-			cpy = ft_strjoin(str, paths[i]);
+			cpy = ft_strjoin(paths[i], str);
 			if (access(cpy, X_OK) != -1)
-				return (free(cpy), i);
+				return (free(cpy), free(str), i);
 			free(cpy);
 			cpy = NULL;
+			i++;
 		}
-		return (-1);
+		return (free(str), -1);
 	}
-	return (-1);
+	return (free(str), -1);
+}
+
+char *get_flags(char **arr)
+{
+	int i = 1;
+	char *str;
+	char *cpy;
+
+	if (arr[i])
+		str = ft_strdup(arr[i]);
+	while (str && arr && arr[i])
+	{
+		cpy = str;
+		str = ft_strjoin(str, arr[i]);
+		free(cpy);
+		i++;
+	}
+	return (str);
 }
 
 t_data *get_cmd(char **arr, char *paths)
 {
 	int index_path;
 	char **path_arr;
+	char *updated;
 	t_data *node;
 
 	path_arr = ft_split(paths, ':');
-	index_path = check_path(arr[0], path_arr);
-	if (index_path != -1)
+	updated = ft_strjoin("/", arr[0]);
+	index_path = check_path(updated, path_arr);
+	if (path_arr && index_path != -1)
 	{
 		node = (t_data *) malloc (sizeof(t_data));
 		if (node)
 		{
 			node->cmd_path = ft_strdup(path_arr[index_path]);
-			free_arr(path_arr);
+			free_arr(&path_arr);//seg buffer-overflow
 			if (!node->cmd_path)
-				return (NULL);
-			node->cmd = arr[0];//do i have to strdup it
-			node->cmd_flags = arr[1];
-			return (node);
+				return (free(updated), free(node), NULL);
+			node->cmd = ft_strjoin(node->cmd_path, updated);
+			if (!node->cmd)
+				return (free(updated), free(node->cmd_path), free(node), NULL);
+			node->cmd_flags = get_flags(arr);
+			return (free(updated), node);
 		}
 		else
-			return (NULL);
+			return (free(updated), free_arr(&path_arr), NULL);
 	}
 	else
-		return (ft_errno(), NULL);
+		return (free(updated), free_arr(&path_arr), ft_errno(), NULL);
 }
 
 char *get_path(char **env)
@@ -249,12 +310,12 @@ int correct_commandes(char **argv, int len, t_data **head, char **env)
     i = 2;
 	path = get_path(env);	//getting path through the path got by get_path
 	if (!path)
-		return (ft_errno(), NULL);
+		return (ft_errno(), 0);
     while (i < len)
     {
         arr = ft_split(argv[i], ' ');
         node = get_cmd(arr, path);
-		free(arr);
+		free_arr(&arr);
 		if (!node)
 			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
 		add_back_list(head, node);
@@ -328,6 +389,7 @@ int main(int ac, char **av, char **env)
 {
     t_data *head_cmd;
 
+	head_cmd = NULL;
     if (ac >= 5)
 	{
         if (correct_files(av[1], av[ac - 1]))
@@ -337,8 +399,10 @@ int main(int ac, char **av, char **env)
 					printf("done parsing");
 		}
 		else
-			ft_errno();
+			// ft_errno();
+			printf("error files");
 	}
 	else
-		ft_errno();
+		// ft_errno();
+		printf("error arguments < 5");
 }
