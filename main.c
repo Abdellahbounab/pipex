@@ -21,6 +21,28 @@ typedef struct s_data{
 	struct s_data *next;
 }   t_data;
 
+void read_arr(char **arr)
+{
+	int i;
+
+	i = 0;
+	while (arr[i])
+	{
+		printf("arr[%d] = %s\n", i, arr[i]);
+		i++;
+	}
+}
+
+void read_lst(t_data *lst)
+{
+	while (lst)
+	{
+		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->cmd_flags, lst->fd[0], lst->fd[1], lst->parent);
+		read_arr(lst->arr_cmd);
+		lst = lst -> next;
+	}
+}
+
 int ft_strlen(char *s)
 {
 	int	i;
@@ -404,17 +426,7 @@ void	close_fd(t_data **head)
 		close(cpy->fd[1]);
 	}
 }
-void read_arr(char **arr)
-{
-	int i;
 
-	i = 0;
-	while (arr[i])
-	{
-		printf("arr[%d] = %s\n", i, arr[i]);
-		i++;
-	}
-}
 
 void	processing(t_data *cpy, t_data *head_cmd)
 {
@@ -427,25 +439,49 @@ void	processing(t_data *cpy, t_data *head_cmd)
 		dup2(0, cpy->fd[0]);
 		dup2(1, cpy->fd[1]);
 	}
-	printf("cmd :(%s)\n/", cpy->cmd);
-	read_arr(cpy->arr_cmd);
-	if (execv(cpy->cmd, cpy->arr_cmd) == -1)
+	printf("(%d, %d)\n",cpy->fd[0], cpy->fd[1]);
+	char geter[1000];	
+	read(cpy->fd[0], geter, 1000);
+	write(1, geter, 1000);
+	if (cpy->cmd && cpy->arr_cmd && execv(cpy->cmd, cpy->arr_cmd) == -1)
 		ft_errno();
+	printf(">>here>\n");
 	close(cpy->fd[0]);
 	close(cpy->fd[1]);
+	exit(EXIT_SUCCESS);
+}
+
+t_data *get_list(t_data *head, int index)
+{
+	int i;
+
+	i = 0;
+	while (head && i < index)
+	{
+		head = head -> next;
+		i++;
+	}
+	return (head);
 }
 
 void	last_process(t_data **head_cmd)
 {
 	t_data *cpy;
-	t_data *tmp;
 
+	read_lst(*head_cmd);
 	cpy = *head_cmd;
-	while (cpy->next)
+	if (!cpy)
+		return ;
+	while (cpy)
 	{
-		printf("pid(%d)\n", cpy->parent);
+		// cpy = get_list(cpy, strlen_lst(*head_cmd) - 1);
 		if (cpy->parent)
+		{
+			printf("PID : [%d]", cpy->parent);
 			waitpid(cpy->parent, NULL, 0);
+		}
+		free_arr(&cpy->arr_cmd);
+		// free(cpy);
 		cpy = cpy->next;
 	}
 }
@@ -455,11 +491,9 @@ void	last_process(t_data **head_cmd)
 void	processing_cmds(t_data **head_cmd)
 {
 	t_data *cpy;
-	int i;
 	int pid;
 
 	cpy = *head_cmd;
-	i = 0;
 	pipe_all(head_cmd);
 	while (cpy)
 	{
@@ -475,20 +509,8 @@ void	processing_cmds(t_data **head_cmd)
 			ft_errno();
 		}
 		cpy = cpy->next;
-		i++;
 	}
 	last_process(head_cmd);
-
-}
-
-
-void read_lst(t_data *lst)
-{
-	while (lst)
-	{
-		printf("(%s, %s, %s)\n", lst->cmd_path, lst->cmd, lst->cmd_flags);
-		lst = lst -> next;
-	}
 }
 
 int main(int ac, char **av, char **env)
