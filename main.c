@@ -255,6 +255,8 @@ char *get_flags(char **arr)
 	char *str;
 	char *cpy;
 
+
+	str = NULL;
 	if (arr[i])
 		str = ft_strdup(arr[i++]);
 	while (str && arr && arr[i])
@@ -393,6 +395,7 @@ int correct_files(char *file_in, char *file_out)
 void pipe_all(t_data **head)
 {
 	int in_tmp;
+	int in2_tmp;
 	t_data *cpy;
 
 	cpy = *head;
@@ -400,7 +403,11 @@ void pipe_all(t_data **head)
 	while (cpy)
 	{
 		if (in_tmp != -1)
+		{
+			in2_tmp = cpy->fd[0];
 			cpy->fd[0] = in_tmp;
+			in_tmp = in2_tmp;
+		}
 		else
 		{
 			in_tmp = cpy->fd[0];
@@ -409,6 +416,7 @@ void pipe_all(t_data **head)
 		if (!cpy->next)
 		{
 			close(cpy->fd[1]);
+			close(in_tmp);
 			cpy->fd[1] = 1;
 		}
 		cpy = cpy->next;
@@ -424,14 +432,18 @@ void	close_fd(t_data **head)
 	{
 		close(cpy->fd[0]);
 		close(cpy->fd[1]);
+		cpy = cpy->next;
 	}
 }
 
 
-void	processing(t_data *cpy, t_data *head_cmd)
+void	processing(t_data *cpy, t_data *head_cmd, int pid, char **env)
 {
 	if (cpy == head_cmd)
+	{
+		dup2(cpy->fd[0], 0);
 		dup2(1, cpy->fd[1]);
+	}
 	else if (!cpy->next)
 		dup2(0, cpy->fd[0]);
 	else
@@ -439,16 +451,9 @@ void	processing(t_data *cpy, t_data *head_cmd)
 		dup2(0, cpy->fd[0]);
 		dup2(1, cpy->fd[1]);
 	}
-	printf("(%d, %d)\n",cpy->fd[0], cpy->fd[1]);
-	char geter[1000];	
-	read(cpy->fd[0], geter, 1000);
-	write(1, geter, 1000);
-	if (cpy->cmd && cpy->arr_cmd && execv(cpy->cmd, cpy->arr_cmd) == -1)
+	printf("[%d](%d, %d)\n",pid ,cpy->fd[0], cpy->fd[1]);
+	if (cpy->cmd && cpy->arr_cmd && execve(cpy->cmd, cpy->arr_cmd, env) == -1)
 		ft_errno();
-	printf(">>here>\n");
-	close(cpy->fd[0]);
-	close(cpy->fd[1]);
-	exit(EXIT_SUCCESS);
 }
 
 t_data *get_list(t_data *head, int index)
@@ -464,7 +469,7 @@ t_data *get_list(t_data *head, int index)
 	return (head);
 }
 
-void	last_process(t_data **head_cmd)
+void	last_process(t_data **head_cmd, int pid)
 {
 	t_data *cpy;
 
@@ -472,12 +477,14 @@ void	last_process(t_data **head_cmd)
 	cpy = *head_cmd;
 	if (!cpy)
 		return ;
-	while (cpy)
+	close_fd(head_cmd);
+	printf("enter pid :{%d}\n", pid);
+	while (cpy -> next)
 	{
 		// cpy = get_list(cpy, strlen_lst(*head_cmd) - 1);
 		if (cpy->parent)
 		{
-			printf("PID : [%d]", cpy->parent);
+			printf("PID : [%d]\n", cpy->parent);
 			waitpid(cpy->parent, NULL, 0);
 		}
 		free_arr(&cpy->arr_cmd);
@@ -488,7 +495,7 @@ void	last_process(t_data **head_cmd)
 
 
 // have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
-void	processing_cmds(t_data **head_cmd)
+void	processing_cmds(t_data **head_cmd, char **env)
 {
 	t_data *cpy;
 	int pid;
@@ -499,7 +506,7 @@ void	processing_cmds(t_data **head_cmd)
 	{
 		pid = fork();
 		if (pid != -1 && !pid)
-			processing(cpy, *head_cmd);
+			processing(cpy, *head_cmd, pid, env);
 		else if (pid != -1 && pid)
 			cpy->parent = pid;
 		else if (pid == -1)
@@ -510,7 +517,7 @@ void	processing_cmds(t_data **head_cmd)
 		}
 		cpy = cpy->next;
 	}
-	last_process(head_cmd);
+	last_process(head_cmd, pid);
 }
 
 int main(int ac, char **av, char **env)
@@ -523,7 +530,7 @@ int main(int ac, char **av, char **env)
         if (correct_files(av[1], av[ac - 1]))
 		{
             if (correct_commandes(av, ac - 1, &head_cmd, env))
-					processing_cmds(&head_cmd);
+					processing_cmds(&head_cmd, env);
 		}
 		else
 			// ft_errno();
