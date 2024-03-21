@@ -91,9 +91,11 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	return (joined);
 }
 
-void ft_errno()
+void ft_errno(char *str)
 {
-	write (2, "Error\n", 6);
+	write (2, "\033[31mError :", 12);
+	write (2, str, ft_strlen(str));
+	write (2, "\033[0m\n", 5);
 	exit (EXIT_FAILURE);
 }
 
@@ -258,8 +260,10 @@ char *get_flags(char **arr)
 
 
 	str = NULL;
+	// special_handler(); ==> to handle the special characters such as " ' " using the trim function
 	if (arr[i])
 		str = ft_strdup(arr[i++]);
+	printf("str : %s\n", str);
 	while (str && arr && arr[i])
 	{
 		cpy = str;
@@ -292,9 +296,9 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			node->cmd = ft_strjoin(node->cmd_path, updated);
 			if (!node->cmd)
 				return (free(updated), free(node->cmd_path), free(node), NULL);
-			node->arr_cmd = arr;
+			node->arr_cmd = arr; //have to be freeing after finihsing
 			node->parent = 0;
-			node->cmd_flags = get_flags(arr);//error handling
+			node->cmd_flags = get_flags(arr);
 			node->fd_in = file_in;
 			node->fd_out = file_out;
 			node->next = NULL;
@@ -304,7 +308,7 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			return (free(updated), free_arr(&path_arr), NULL);
 	}
 	else
-		return (free(updated), free_arr(&path_arr), ft_errno(), NULL);
+		return (free(updated), free_arr(&path_arr), ft_errno("failed command"), NULL);
 }
 
 char *get_path(char **env)
@@ -359,10 +363,13 @@ int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
     i = 2;
 	path = get_path(env);	//getting path through the path got by get_path
 	if (!path)
-		return (ft_errno(), 0);
+		return (ft_errno("path invalid"), 0);
     while (i < len)
     {
         arr = ft_split(argv[i], ' ');
+		if (!arr)
+			return (ft_error("malloc"), 0);
+		handle_args(&arr);
         node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
 			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
@@ -384,28 +391,6 @@ int correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
 			return (close(*fd_in), 0);
 	}
     return (0);
-}
-
-void	processing(t_data *cpy,  char **env)
-{
-	int fds[2];
-	
-	if (pipe(fds) == -1)
-		ft_errno();//update this error to free the leaks
-	dup2(cpy->fd_in, 0);
-	if (cpy->next)
-	{
-		cpy->next->fd_in = fds[0];
-		dup2(fds[1], 1);
-	}
-	else
-	{
-		close(fds[0]);
-		close(fds[1]);
-		dup2(cpy->fd_out, 1);
-	}
-	if (cpy->cmd && cpy->arr_cmd && execve(cpy->cmd, cpy->arr_cmd, env) == -1)
-		ft_errno();
 }
 
 t_data *get_list(t_data *head, int index)
@@ -439,31 +424,58 @@ void	last_process(t_data **head_cmd)
 	}
 }
 
+void	processing(t_data **cpy,  char **env, int fdo)
+{
+	dup2((*cpy)->fd_in, 0);
+	if ((*cpy)->next)
+		dup2(fdo, 1);
+	else 
+	{
+		close(fdo);
+		dup2((*cpy)->fd_out, 1);
+	}
+	if ((*cpy)->cmd && (*cpy)->arr_cmd && execve((*cpy)->cmd, (*cpy)->arr_cmd, env) == -1)
+		ft_errno("execve failed");
+}
 
 // have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
 void	processing_cmds(t_data **head_cmd, char **env)
 {
 	t_data *cpy;
 	int pid;
+	int fds[2];
 
 	cpy = *head_cmd;
 	while (cpy)
 	{
+		if (pipe(fds) == -1)
+			ft_errno("pid -1");//update this error to free the leaks
 		pid = fork();
 		if (pid != -1 && !pid)
-			processing(cpy, env);
+		{
+			processing(&cpy, env, fds[1]);
+		}
 		else if (pid != -1 && pid)
+		{
 			cpy->parent = pid;
+			if (cpy->next)
+			{
+				close(cpy->next->fd_in);
+				cpy->next->fd_in = fds[0];
+			}
+			else
+				close(fds[0]);
+		}
 		else if (pid == -1)
 		{
 			last_process(head_cmd);
 			free_list(head_cmd);
-			ft_errno();
+			close(fds[0]);
+			ft_errno("pid -1");
 		}
+		close(fds[1]);
 		cpy = cpy->next;
 	}
-		while(1)
-			;
 	last_process(head_cmd);
 }
 
@@ -477,14 +489,13 @@ int main(int ac, char **av, char **env)
 	{
         if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
-            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
+            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))//handle the ' ' commandes and the single ones
 					processing_cmds(&head_cmd, env);
+			write(1, "\033[32mSuccess\033[0m\n", 17);
 		}
 		else
-			// ft_errno();
-			printf("error files");
+			ft_errno("incorrect files");
 	}
 	else
-		// ft_errno();
-		printf("error arguments < 5");
+		ft_errno("few arguments");
 }
