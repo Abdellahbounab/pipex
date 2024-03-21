@@ -294,7 +294,7 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 				return (free(updated), free(node->cmd_path), free(node), NULL);
 			node->arr_cmd = arr;
 			node->parent = 0;
-			node->cmd_flags = get_flags(arr);
+			node->cmd_flags = get_flags(arr);//error handling
 			node->fd_in = file_in;
 			node->fd_out = file_out;
 			node->next = NULL;
@@ -386,25 +386,12 @@ int correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
     return (0);
 }
 
-void	close_fd(t_data **head)
-{
-	t_data *cpy;
-
-	cpy = *head;
-	while (cpy)
-	{
-		close(cpy->fd_in);
-		close(cpy->fd_out);
-		cpy = cpy->next;
-	}
-}
-
-
-void	processing(t_data *cpy, t_data *head_cmd, char **env)
+void	processing(t_data *cpy,  char **env)
 {
 	int fds[2];
 	
-	pipe(fds);
+	if (pipe(fds) == -1)
+		ft_errno();//update this error to free the leaks
 	dup2(cpy->fd_in, 0);
 	if (cpy->next)
 	{
@@ -441,9 +428,10 @@ void	last_process(t_data **head_cmd)
 	cpy = *head_cmd;
 	if (!cpy)
 		return ;
-	close_fd(head_cmd);
 	while (cpy -> next)
 	{
+		close(cpy->fd_in);
+		close(cpy->fd_out);
 		if (cpy->parent)
 			waitpid(cpy->parent, NULL, 0);
 		free_arr(&cpy->arr_cmd);
@@ -463,17 +451,19 @@ void	processing_cmds(t_data **head_cmd, char **env)
 	{
 		pid = fork();
 		if (pid != -1 && !pid)
-			processing(cpy, *head_cmd, env);
+			processing(cpy, env);
 		else if (pid != -1 && pid)
 			cpy->parent = pid;
 		else if (pid == -1)
 		{
-			close_fd(head_cmd);
+			last_process(head_cmd);
 			free_list(head_cmd);
 			ft_errno();
 		}
 		cpy = cpy->next;
 	}
+		while(1)
+			;
 	last_process(head_cmd);
 }
 
