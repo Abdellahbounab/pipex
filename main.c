@@ -17,7 +17,8 @@ typedef struct s_data{
 	char **arr_cmd;
 	char *cmd;
 	int parent;//t_pid
-	int fd[2];
+	int fd_out;
+	int fd_in;
 	struct s_data *next;
 }   t_data;
 
@@ -37,7 +38,7 @@ void read_lst(t_data *lst)
 {
 	while (lst)
 	{
-		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->cmd_flags, lst->fd[0], lst->fd[1], lst->parent);
+		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->cmd_flags, lst->fd_in, lst->fd_out, lst->parent);
 		read_arr(lst->arr_cmd);
 		lst = lst -> next;
 	}
@@ -269,7 +270,7 @@ char *get_flags(char **arr)
 	return (str);
 }
 
-t_data *get_cmd(char **arr, char *paths)
+t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 {
 	int index_path;
 	char **path_arr;
@@ -294,8 +295,8 @@ t_data *get_cmd(char **arr, char *paths)
 			node->arr_cmd = arr;
 			node->parent = 0;
 			node->cmd_flags = get_flags(arr);
-			if (pipe(node->fd) == -1)
-				return (free(updated), free(node->cmd_path), free(node), NULL);
+			node->fd_in = file_in;
+			node->fd_out = file_out;
 			node->next = NULL;
 			return (free(updated), node);
 		}
@@ -348,7 +349,7 @@ int strlen_lst(t_data *head)
 	return (len);
 }
 
-int correct_commandes(char **argv, int len, t_data **head, char **env)
+int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 {
     int i;
 	char **arr;
@@ -362,7 +363,7 @@ int correct_commandes(char **argv, int len, t_data **head, char **env)
     while (i < len)
     {
         arr = ft_split(argv[i], ' ');
-        node = get_cmd(arr, path);
+        node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
 			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
 		add_back_list(head, node);
@@ -371,56 +372,18 @@ int correct_commandes(char **argv, int len, t_data **head, char **env)
 	return (1);
 }
 
-int correct_files(char *file_in, char *file_out)
+int correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
 {
-    int fd_in;
-    int fd_out;
-
-    fd_in = open(file_in, O_RDONLY);
-    fd_out = open(file_out, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
-    if (fd_in != -1)
+    *fd_in = open(file_in, O_RDONLY);
+    *fd_out = open(file_out, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (*fd_in != -1)
 	{
-		dup2(STDIN_FILENO, fd_in);
-        if (fd_out != -1)
-		{
-			dup2(STDOUT_FILENO, fd_out);
+        if (*fd_out != -1)
             return (1);
-		}
 		else
-			return (close(fd_in), 0);
+			return (close(*fd_in), 0);
 	}
     return (0);
-}
-
-void pipe_all(t_data **head)
-{
-	int in_tmp;
-	int in2_tmp;
-	t_data *cpy;
-
-	cpy = *head;
-	in_tmp = -1;
-	while (cpy)
-	{
-		if (in_tmp != -1)
-		{
-			in2_tmp = cpy->fd[0];
-			cpy->fd[0] = in_tmp;
-			in_tmp = in2_tmp;
-		}
-		else
-		{
-			in_tmp = cpy->fd[0];
-			cpy->fd[0] = 0;
-		}
-		if (!cpy->next)
-		{
-			close(cpy->fd[1]);
-			close(in_tmp);
-			cpy->fd[1] = 1;
-		}
-		cpy = cpy->next;
-	}
 }
 
 void	close_fd(t_data **head)
@@ -430,28 +393,30 @@ void	close_fd(t_data **head)
 	cpy = *head;
 	while (cpy)
 	{
-		close(cpy->fd[0]);
-		close(cpy->fd[1]);
+		close(cpy->fd_in);
+		close(cpy->fd_out);
 		cpy = cpy->next;
 	}
 }
 
 
-void	processing(t_data *cpy, t_data *head_cmd, int pid, char **env)
+void	processing(t_data *cpy, t_data *head_cmd, char **env)
 {
-	if (cpy == head_cmd)
+	int fds[2];
+	
+	pipe(fds);
+	dup2(cpy->fd_in, 0);
+	if (cpy->next)
 	{
-		dup2(cpy->fd[0], 0);
-		dup2(1, cpy->fd[1]);
+		cpy->next->fd_in = fds[0];
+		dup2(fds[1], 1);
 	}
-	else if (!cpy->next)
-		dup2(0, cpy->fd[0]);
 	else
 	{
-		dup2(0, cpy->fd[0]);
-		dup2(1, cpy->fd[1]);
+		close(fds[0]);
+		close(fds[1]);
+		dup2(cpy->fd_out, 1);
 	}
-	printf("[%d](%d, %d)\n",pid ,cpy->fd[0], cpy->fd[1]);
 	if (cpy->cmd && cpy->arr_cmd && execve(cpy->cmd, cpy->arr_cmd, env) == -1)
 		ft_errno();
 }
@@ -469,26 +434,19 @@ t_data *get_list(t_data *head, int index)
 	return (head);
 }
 
-void	last_process(t_data **head_cmd, int pid)
+void	last_process(t_data **head_cmd)
 {
 	t_data *cpy;
 
-	read_lst(*head_cmd);
 	cpy = *head_cmd;
 	if (!cpy)
 		return ;
 	close_fd(head_cmd);
-	printf("enter pid :{%d}\n", pid);
 	while (cpy -> next)
 	{
-		// cpy = get_list(cpy, strlen_lst(*head_cmd) - 1);
 		if (cpy->parent)
-		{
-			printf("PID : [%d]\n", cpy->parent);
 			waitpid(cpy->parent, NULL, 0);
-		}
 		free_arr(&cpy->arr_cmd);
-		// free(cpy);
 		cpy = cpy->next;
 	}
 }
@@ -501,12 +459,11 @@ void	processing_cmds(t_data **head_cmd, char **env)
 	int pid;
 
 	cpy = *head_cmd;
-	pipe_all(head_cmd);
 	while (cpy)
 	{
 		pid = fork();
 		if (pid != -1 && !pid)
-			processing(cpy, *head_cmd, pid, env);
+			processing(cpy, *head_cmd, env);
 		else if (pid != -1 && pid)
 			cpy->parent = pid;
 		else if (pid == -1)
@@ -517,19 +474,20 @@ void	processing_cmds(t_data **head_cmd, char **env)
 		}
 		cpy = cpy->next;
 	}
-	last_process(head_cmd, pid);
+	last_process(head_cmd);
 }
 
 int main(int ac, char **av, char **env)
 {
     t_data *head_cmd;
+	int fd[2];
 
 	head_cmd = NULL;
     if (ac >= 5)
 	{
-        if (correct_files(av[1], av[ac - 1]))
+        if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
-            if (correct_commandes(av, ac - 1, &head_cmd, env))
+            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
 					processing_cmds(&head_cmd, env);
 		}
 		else
