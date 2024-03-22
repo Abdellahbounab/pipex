@@ -353,6 +353,69 @@ int strlen_lst(t_data *head)
 	return (len);
 }
 
+int has_special(char *str, int *start, int *end, char c)
+{
+	while (*start < *end)
+	{
+		if (str[*start] != c)
+			(*start)++;
+		if (str[*end] != c)
+			(*end)--;
+		if (str[*start] == c && str[*end] == c)
+		{
+			printf("start : %d, end = %d\n", *start, *end);
+			return (1);
+		}
+	}
+	return (0);
+}
+
+char *ft_strdup_len(char *str, int len)
+{
+	char *cpy;
+	int i;
+
+	i = 0;
+	if (str && !*str)
+		return (ft_strdup(""));
+	cpy = (char *) malloc (sizeof(char) * (len + 1));
+	if (!cpy)
+		return (NULL);
+	while (str && str[i] && i < len)
+	{
+		cpy[i] = str[i];
+		i++;
+	}
+	cpy[i] = 0;
+	return (cpy);
+}
+
+char *handle_args(char *args)
+{
+	char *str;
+	int start;
+	int end;
+
+	start = 0;
+	str = args;
+	end = ft_strlen(args);
+	if (has_special(args, &start, &end, '\''))
+	{
+		printf("special : %s\n", str);
+		str = ft_strdup_len(str + start, ft_strlen(str) - end - start);//better update the calculation
+		
+		printf("atfer :%s\n", str);
+		char **arr = ft_split(args, ' ');
+		args = ft_strjoin(arr[0], " ");
+		char *res = ft_strjoin(args, str);
+		free(args);
+		free_arr(&arr);
+		free(str);
+			return (res);
+	}
+	return (args);
+}
+
 int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 {
     int i;
@@ -366,10 +429,9 @@ int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 		return (ft_errno("path invalid"), 0);
     while (i < len)
     {
-        arr = ft_split(argv[i], ' ');
+        arr = ft_split(handle_args(argv[i]), ' ');
 		if (!arr)
-			return (ft_error("malloc"), 0);
-		handle_args(&arr);
+			return (ft_errno("malloc"), 0);
         node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
 			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
@@ -452,9 +514,7 @@ void	processing_cmds(t_data **head_cmd, char **env)
 			ft_errno("pid -1");//update this error to free the leaks
 		pid = fork();
 		if (pid != -1 && !pid)
-		{
 			processing(&cpy, env, fds[1]);
-		}
 		else if (pid != -1 && pid)
 		{
 			cpy->parent = pid;
