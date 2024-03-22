@@ -11,9 +11,16 @@
 //read about env && access && execv
 
 
+
+
+// /bin/
+// ./script file
+// awk (multiple arguments) ('')
+// grep with single quote
+
 typedef struct s_data{
     char *cmd_path;
-    char *cmd_flags;
+    // char *cmd_flags;
 	char **arr_cmd;
 	char *cmd;
 	int parent;//t_pid
@@ -38,7 +45,7 @@ void read_lst(t_data *lst)
 {
 	while (lst)
 	{
-		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->cmd_flags, lst->fd_in, lst->fd_out, lst->parent);
+		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->fd_in, lst->fd_out, lst->parent);
 		read_arr(lst->arr_cmd);
 		lst = lst -> next;
 	}
@@ -247,6 +254,9 @@ int check_path(char *str ,char **paths)
 			cpy = NULL;
 			i++;
 		}
+		printf("%s\n", str);
+		if (access(str, X_OK) != -1)
+			return (printf("done\n"), i);
 		return (-1);
 	}
 	return (-1);
@@ -263,15 +273,44 @@ char *get_flags(char **arr)
 	// special_handler(); ==> to handle the special characters such as " ' " using the trim function
 	if (arr[i])
 		str = ft_strdup(arr[i++]);
-	printf("str : %s\n", str);
 	while (str && arr && arr[i])
 	{
+		cpy = str;
+		str = ft_strjoin(str, " ");
+		free(cpy);
 		cpy = str;
 		str = ft_strjoin(str, arr[i]);
 		free(cpy);
 		i++;
 	}
 	return (str);
+}
+
+char **get_arr_cmd(char *cmd, char *args)
+{
+	int len;
+	char **arr;
+
+	len = 2;
+	if (args)
+		len++;
+	arr = (char **) malloc (sizeof(char *) * len);
+	if (!arr)
+		return (free(args), NULL);
+	arr[0] = ft_strdup(cmd);
+	if (arr[0])
+	{
+		if (len > 2)
+		{
+			arr[1] = ft_strdup(args);
+			if (!arr[1])
+				return (free(args), NULL);
+		}
+		arr[len - 1] = 0;
+		free(args);
+		return (arr);
+	}
+	return (free(args), NULL);
 }
 
 t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
@@ -296,9 +335,12 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			node->cmd = ft_strjoin(node->cmd_path, updated);
 			if (!node->cmd)
 				return (free(updated), free(node->cmd_path), free(node), NULL);
-			node->arr_cmd = arr; //have to be freeing after finihsing
+				// the arr_cmd have to be updated to have {only exact cmd, cmd_flags, null};
+			node->arr_cmd = get_arr_cmd(arr[0], get_flags(arr));
+			if (!node->arr_cmd)
+				return (free(node->cmd), free(updated), free(node), NULL);
 			node->parent = 0;
-			node->cmd_flags = get_flags(arr);
+			// node->cmd_flags = get_flags(arr);
 			node->fd_in = file_in;
 			node->fd_out = file_out;
 			node->next = NULL;
@@ -362,10 +404,7 @@ int has_special(char *str, int *start, int *end, char c)
 		if (str[*end] != c)
 			(*end)--;
 		if (str[*start] == c && str[*end] == c)
-		{
-			printf("start : %d, end = %d\n", *start, *end);
 			return (1);
-		}
 	}
 	return (0);
 }
@@ -394,20 +433,19 @@ char *handle_args(char *args)
 {
 	char *str;
 	int start;
+	char **arr;
+	char *res;
 	int end;
 
 	start = 0;
 	str = args;
 	end = ft_strlen(args);
-	if (has_special(args, &start, &end, '\''))
+	if (has_special(str, &start, &end, '\''))
 	{
-		printf("special : %s\n", str);
-		str = ft_strdup_len(str + start, ft_strlen(str) - end - start);//better update the calculation
-		
-		printf("atfer :%s\n", str);
-		char **arr = ft_split(args, ' ');
+		str = ft_strdup_len(str + start + 1, end - start - 1);	//better update the calculation
+		arr = ft_split(args, ' ');
 		args = ft_strjoin(arr[0], " ");
-		char *res = ft_strjoin(args, str);
+		res = ft_strjoin(args, str);
 		free(args);
 		free_arr(&arr);
 		free(str);
@@ -444,7 +482,7 @@ int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 int correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
 {
     *fd_in = open(file_in, O_RDONLY);
-    *fd_out = open(file_out, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+    *fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
     if (*fd_in != -1)
 	{
         if (*fd_out != -1)
@@ -489,6 +527,7 @@ void	last_process(t_data **head_cmd)
 void	processing(t_data **cpy,  char **env, int fdo)
 {
 	dup2((*cpy)->fd_in, 0);
+	// printf("%s\n", (*cpy)->cmd_flags);
 	if ((*cpy)->next)
 		dup2(fdo, 1);
 	else 
@@ -550,8 +589,10 @@ int main(int ac, char **av, char **env)
         if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
             if (correct_commandes(av, ac - 1, &head_cmd, env, fd))//handle the ' ' commandes and the single ones
-					processing_cmds(&head_cmd, env);
-			write(1, "\033[32mSuccess\033[0m\n", 17);
+			{
+				processing_cmds(&head_cmd, env);
+				write(1, "\033[32mSuccess\033[0m\n", 17);
+			}
 		}
 		else
 			ft_errno("incorrect files");
