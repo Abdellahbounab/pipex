@@ -321,7 +321,7 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 	t_data *node;
 
 	path_arr = ft_split(paths, ':');
-	updated = ft_strjoin("/", arr[0]);
+	updated = ft_strjoin("/", arr[0]); //have to handle this case
 	index_path = check_path(updated, path_arr);
 	if (path_arr && index_path != -1)
 	{
@@ -429,6 +429,22 @@ char *ft_strdup_len(char *str, int len)
 	return (cpy);
 }
 
+int count_char(char *str, char c)
+{
+	int i;
+	int count;
+
+	i = 0;
+	count = 0;
+	while (str[i])
+	{
+		if (str[i] == c)
+			count++;
+		i++;
+	}
+	return (count);
+}
+
 char *handle_args(char *args)
 {
 	char *str;
@@ -436,16 +452,19 @@ char *handle_args(char *args)
 	char **arr;
 	char *res;
 	int end;
-
+	int single_quotes;
+// case of multiple '' '' or flags or if \'
 	start = 0;
+	end = 0;
 	str = args;
-	end = ft_strlen(args);
-	if (has_special(str, &start, &end, '\''))
+	single_quotes = count_char(args, '\'');
+	while (single_quotes && single_quotes / 2)
 	{
+		has_special(str, &start, &end, '\'');
 		str = ft_strdup_len(str + start + 1, end - start - 1);	//better update the calculation
-		arr = ft_split(args, ' ');
-		args = ft_strjoin(arr[0], " ");
-		res = ft_strjoin(args, str);
+		// arr = ft_split(args, ' ');
+		// args = ft_strjoin(arr[0], " ");
+		// res = ft_strjoin(args, str);
 		free(args);
 		free_arr(&arr);
 		free(str);
@@ -527,7 +546,6 @@ void	last_process(t_data **head_cmd)
 void	processing(t_data **cpy,  char **env, int fdo)
 {
 	dup2((*cpy)->fd_in, 0);
-	// printf("%s\n", (*cpy)->cmd_flags);
 	if ((*cpy)->next)
 		dup2(fdo, 1);
 	else 
@@ -588,7 +606,7 @@ int main(int ac, char **av, char **env)
 	{
         if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
-            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))//handle the ' ' commandes and the single ones
+            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
 			{
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);
