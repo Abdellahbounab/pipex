@@ -10,20 +10,11 @@
 //github documentation : https://csnotes.medium.com/pipex-tutorial-42-project-4469f5dd5901
 //read about env && access && execv
 
-
-
-
-// /bin/
-// ./script file
-// awk (multiple arguments) ('')
-// grep with single quote
-
 typedef struct s_data{
     char *cmd_path;
-    // char *cmd_flags;
 	char **arr_cmd;
 	char *cmd;
-	int parent;//t_pid
+	int parent;
 	int fd_out;
 	int fd_in;
 	struct s_data *next;
@@ -237,29 +228,30 @@ char	**ft_split(char const *s, char c)
 	return (array);
 }
 
-int check_path(char *str ,char **paths)
+char *check_path(char *str ,char **paths, int *len)
 {
-	int i;
 	char *cpy;
+	char *updated;
 
-	i = 0;
+	*len = 0;
+	printf("str : %s\n", str);
 	if (str && paths)
 	{
-		while (paths[i])
+		if (access(str, X_OK) != -1)
+			return (*len = -1, ft_strdup(str));
+		updated = ft_strjoin("/", str);
+		while (paths[*len])
 		{
-			cpy = ft_strjoin(paths[i], str);
+			cpy = ft_strjoin(paths[*len], updated);
 			if (access(cpy, X_OK) != -1)
-				return (free(cpy), i);
+				return (updated);
 			free(cpy);
 			cpy = NULL;
-			i++;
+			(*len)++;
 		}
-		printf("%s\n", str);
-		if (access(str, X_OK) != -1)
-			return (printf("done\n"), i);
-		return (-1);
+		return (0);
 	}
-	return (-1);
+	return (0);
 }
 
 char *get_flags(char **arr)
@@ -270,7 +262,6 @@ char *get_flags(char **arr)
 
 
 	str = NULL;
-	// special_handler(); ==> to handle the special characters such as " ' " using the trim function
 	if (arr[i])
 		str = ft_strdup(arr[i++]);
 	while (str && arr && arr[i])
@@ -286,31 +277,43 @@ char *get_flags(char **arr)
 	return (str);
 }
 
-char **get_arr_cmd(char *cmd, char *args)
+int get_arr_len(char **cmd)
+{
+	int i;
+
+	i = 0;
+	while (cmd && cmd[i])
+		i++;
+	return (i);
+}
+
+
+char **get_arr_cmd(char **cmd)
 {
 	int len;
 	char **arr;
+	int i;
 
-	len = 2;
-	if (args)
-		len++;
-	arr = (char **) malloc (sizeof(char *) * len);
+	i = 0;
+	len = get_arr_len(cmd);
+	// have to update this arr** to contain every flag in its own memory address:
+	arr = (char **) malloc (sizeof(char *) * len + 1);
 	if (!arr)
-		return (free(args), NULL);
-	arr[0] = ft_strdup(cmd);
+		return (NULL);
+	arr[i] = ft_strdup(cmd[i++]);
+	while (i < len)
 	if (arr[0])
 	{
 		if (len > 2)
 		{
-			arr[1] = ft_strdup(args);
+			arr[1] = ft_strdup(cmd[i]);
 			if (!arr[1])
-				return (free(args), NULL);
+				return (NULL);
 		}
 		arr[len - 1] = 0;
-		free(args);
 		return (arr);
 	}
-	return (free(args), NULL);
+	return (NULL);
 }
 
 t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
@@ -321,26 +324,33 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 	t_data *node;
 
 	path_arr = ft_split(paths, ':');
-	updated = ft_strjoin("/", arr[0]); //have to handle this case
-	index_path = check_path(updated, path_arr);
-	if (path_arr && index_path != -1)
+	updated = check_path(arr[0], path_arr, &index_path);
+	if (path_arr && updated)
 	{
 		node = (t_data *) malloc (sizeof(t_data));
 		if (node)
 		{
-			node->cmd_path = ft_strdup(path_arr[index_path]);
+			if (index_path != -1)
+			{
+				node->cmd_path = ft_strdup(path_arr[index_path]);
+				if (!node->cmd_path)
+					return (free(updated), free(node), NULL);
+				node->cmd = ft_strjoin(node->cmd_path, updated);
+			}
+			else
+			{
+				node->cmd_path = NULL;
+				node->cmd = ft_strdup(updated);
+			}
 			free_arr(&path_arr);
-			if (!node->cmd_path)
-				return (free(updated), free(node), NULL);
-			node->cmd = ft_strjoin(node->cmd_path, updated);
 			if (!node->cmd)
-				return (free(updated), free(node->cmd_path), free(node), NULL);
+						return (free(updated), free(node->cmd_path), free(node), NULL);
 				// the arr_cmd have to be updated to have {only exact cmd, cmd_flags, null};
-			node->arr_cmd = get_arr_cmd(arr[0], get_flags(arr));
+			// node->arr_cmd = get_arr_cmd(arr);
+			node->arr_cmd = arr;
 			if (!node->arr_cmd)
 				return (free(node->cmd), free(updated), free(node), NULL);
 			node->parent = 0;
-			// node->cmd_flags = get_flags(arr);
 			node->fd_in = file_in;
 			node->fd_out = file_out;
 			node->next = NULL;
@@ -445,38 +455,125 @@ int count_char(char *str, char c)
 	return (count);
 }
 
-char *handle_args(char *args)
+char **ft_special_split(char *s, char c, char condition)
 {
-	char *str;
-	int start;
-	char **arr;
-	char *res;
-	int end;
-	int single_quotes;
-// case of multiple '' '' or flags or if \'
-	start = 0;
-	end = 0;
-	str = args;
-	single_quotes = count_char(args, '\'');
-	while (single_quotes && single_quotes / 2)
+	char	**array;
+	int		i;
+	int		len;
+	int		words;
+
+	i = -1;
+	words = 0;
+	array = (char **) malloc (sizeof(char *) * get_words(s, c, &words));
+	if (!array)
+		return (NULL);
+	while (++i < words)
 	{
-		has_special(str, &start, &end, '\'');
-		str = ft_strdup_len(str + start + 1, end - start - 1);	//better update the calculation
-		// arr = ft_split(args, ' ');
-		// args = ft_strjoin(arr[0], " ");
-		// res = ft_strjoin(args, str);
-		free(args);
-		free_arr(&arr);
-		free(str);
-			return (res);
+		len = 0;
+		array[i] = NULL;
+		while (*s && *s == c && *(s - 1) && *(s - 1) != condition)
+			s++;
+		while (*s)
+		{
+			len++;
+			s++;
+			if (*s == c && *(s - 1) != condition)
+				break;
+		}
+		if (!ft_strsdup(&array[i], s - len, len))
+					return (free_split(&array, i));
 	}
-	return (args);
+	return (array[words] = 0, array);
+}
+
+static int	is_setted(char c, const char *set)
+{
+	while (*set)
+		if (c == *set)
+			return (1);
+	else
+		set++;
+	return (0);
+}
+
+char	*ft_strtrim(char const *s1, char const *set)
+{
+	char	*trim;
+	size_t	end;
+	size_t	start;
+	size_t	i;
+
+	i = 0;
+	start = 0;
+	end = ft_strlen((char *)s1);
+	if (!*s1)
+		return (ft_strdup(""));
+	while (is_setted(s1[start], set) && s1[start])
+		start++;
+	while (start != end && is_setted(s1[--end], set))
+		;
+	trim = (char *) malloc (sizeof(char) * (end - start + 1) + 1);
+	if (!trim)
+		return (0);
+	while (s1[start] && start <= end)
+	{
+		trim[i] = s1[start];
+		start++;
+		i++;
+	}
+	trim[i] = 0;
+	return (trim);
+}
+
+void trim_array(char ***arr)
+{
+	int i;
+	char **arr_cpy;
+	char *tmp;
+
+	i = 0;
+	arr_cpy = *arr;
+	while (arr_cpy[i])
+	{
+		tmp = arr_cpy[i];
+		arr_cpy[i] = ft_strtrim(tmp, " ");
+		printf("arr_cpy[i] = .%s.\n", arr_cpy[i]);
+		free(tmp);
+		i++;
+	}
+}
+
+
+// it have to handle the spaces in the first args since it may contain two strings
+char **handle_args(char **arr)
+{
+	int i;
+	int len;
+	char **head;
+	char **arr_return;
+
+	i = 0;
+	head = ft_split(arr[i], ' ');
+	if (head[1])
+	{
+		len = get_arr_len(arr) + 1;
+		arr_return = (char **) malloc (sizeof(char *) * (len + 1));
+		while (head[i])
+			arr_return[i] = ft_strdup(head[i++]);
+		while (i < len)
+		{
+			arr_return[i] = ft_strdup(*arr);
+			*(arr)++;
+		}
+		
+	}
 }
 
 int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 {
     int i;
 	char **arr;
+	char **arr_tmp;
 	t_data *node;
 	char *path;
 
@@ -486,7 +583,10 @@ int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
 		return (ft_errno("path invalid"), 0);
     while (i < len)
     {
-        arr = ft_split(handle_args(argv[i]), ' ');
+        arr_tmp = ft_special_split(argv[i], '\'', '\\');
+		//  trim every str in arr and replace it by trim(str + 1) if trim returned = NULL && str + 1 != NULL
+		trim_array(&arr_tmp);
+		arr = handle_args(arr_tmp);
 		if (!arr)
 			return (ft_errno("malloc"), 0);
         node = get_cmd(arr, path, *fd, *(fd + 1));
@@ -545,6 +645,7 @@ void	last_process(t_data **head_cmd)
 
 void	processing(t_data **cpy,  char **env, int fdo)
 {
+	// read_arr((*cpy)->arr_cmd);
 	dup2((*cpy)->fd_in, 0);
 	if ((*cpy)->next)
 		dup2(fdo, 1);
@@ -576,10 +677,7 @@ void	processing_cmds(t_data **head_cmd, char **env)
 		{
 			cpy->parent = pid;
 			if (cpy->next)
-			{
-				close(cpy->next->fd_in);
-				cpy->next->fd_in = fds[0];
-			}
+				dup2(fds[0], cpy->next->fd_in);
 			else
 				close(fds[0]);
 		}
@@ -611,6 +709,8 @@ int main(int ac, char **av, char **env)
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);
 			}
+			else
+				ft_errno("command failed");
 		}
 		else
 			ft_errno("incorrect files");
