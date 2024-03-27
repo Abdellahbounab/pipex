@@ -27,7 +27,7 @@ void read_arr(char **arr)
 	i = 0;
 	while (arr[i])
 	{
-		printf("arr[%d] = %s\n", i, arr[i]);
+		printf("%p <<>>arr[%d] = %s<<\n",arr[i], i, arr[i]);
 		i++;
 	}
 }
@@ -36,7 +36,7 @@ void read_lst(t_data *lst)
 {
 	while (lst)
 	{
-		printf("(%s, %s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->fd_in, lst->fd_out, lst->parent);
+		printf("(%s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->fd_in, lst->fd_out, lst->parent);
 		read_arr(lst->arr_cmd);
 		lst = lst -> next;
 	}
@@ -134,6 +134,8 @@ static int	get_words(char const *s, char c, int *index) //ft_split
 	int		found;
 
 	counter = 0;
+	if (!s)
+		return (0);
 	while (*s)
 	{
 		found = 0;
@@ -208,8 +210,8 @@ char	**ft_split(char const *s, char c)
 
 	i = -1;
 	words = 0;
-	array = (char **) malloc (sizeof(char *) * get_words(s, c, &words));
-	if (!array)
+ 	array = (char **) malloc (sizeof(char *) * get_words(s, c, &words));
+	if (!s || !array)
 		return (NULL);
 	while (++i < words)
 	{
@@ -234,7 +236,6 @@ char *check_path(char *str ,char **paths, int *len)
 	char *updated;
 
 	*len = 0;
-	printf("str : %s\n", str);
 	if (str && paths)
 	{
 		if (access(str, X_OK) != -1)
@@ -244,7 +245,7 @@ char *check_path(char *str ,char **paths, int *len)
 		{
 			cpy = ft_strjoin(paths[*len], updated);
 			if (access(cpy, X_OK) != -1)
-				return (updated);
+				return (free(cpy), updated);
 			free(cpy);
 			cpy = NULL;
 			(*len)++;
@@ -300,7 +301,7 @@ char **get_arr_cmd(char **cmd)
 	arr = (char **) malloc (sizeof(char *) * len + 1);
 	if (!arr)
 		return (NULL);
-	arr[i] = ft_strdup(cmd[i++]);
+	arr[i] = ft_strdup(cmd[i]);
 	while (i < len)
 	if (arr[0])
 	{
@@ -313,6 +314,8 @@ char **get_arr_cmd(char **cmd)
 		arr[len - 1] = 0;
 		return (arr);
 	}
+	else
+		ft_errno("malloc");
 	return (NULL);
 }
 
@@ -345,8 +348,6 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			free_arr(&path_arr);
 			if (!node->cmd)
 						return (free(updated), free(node->cmd_path), free(node), NULL);
-				// the arr_cmd have to be updated to have {only exact cmd, cmd_flags, null};
-			// node->arr_cmd = get_arr_cmd(arr);
 			node->arr_cmd = arr;
 			if (!node->arr_cmd)
 				return (free(node->cmd), free(updated), free(node), NULL);
@@ -528,45 +529,82 @@ char	*ft_strtrim(char const *s1, char const *set)
 void trim_array(char ***arr)
 {
 	int i;
+	int j;
 	char **arr_cpy;
 	char *tmp;
 
 	i = 0;
+	j = 0;
 	arr_cpy = *arr;
+
 	while (arr_cpy[i])
 	{
 		tmp = arr_cpy[i];
-		arr_cpy[i] = ft_strtrim(tmp, " ");
-		printf("arr_cpy[i] = .%s.\n", arr_cpy[i]);
+		arr_cpy[j] = ft_strtrim(tmp, " ");
+		if (!*arr_cpy[j])
+		{
+			free(arr_cpy[j]);
+			arr_cpy[j] = NULL;
+			j--;
+		}
 		free(tmp);
+		tmp = NULL;
+		j++;
 		i++;
 	}
+	while (j < i)
+		arr_cpy[j++] = 0;
 }
 
+char **arr_strdup (char **str)
+{
+	char **re;
+	int i;
+
+	if (!str)
+		return (str);
+	re = malloc (sizeof (char *) * (get_arr_len (str) + 1));
+	if (!re)
+		return (re);
+	i = 0;
+	while (str[i])
+	{
+		re[i] = ft_strdup (str[i]);
+		i++;
+	}
+	re [i] = 0;
+	return (re);
+}
 
 // it have to handle the spaces in the first args since it may contain two strings
 char **handle_args(char **arr)
 {
 	int i;
+	int j;
 	int len;
 	char **head;
 	char **arr_return;
 
 	i = 0;
+	j = 1;
 	head = ft_split(arr[i], ' ');
-	if (head[1])
+	len = get_arr_len(head);
+	if (len > 1)
 	{
-		len = get_arr_len(arr) + 1;
+		len += get_arr_len(arr + 1);
 		arr_return = (char **) malloc (sizeof(char *) * (len + 1));
 		while (head[i])
-			arr_return[i] = ft_strdup(head[i++]);
-		while (i < len)
 		{
-			arr_return[i] = ft_strdup(*arr);
-			*(arr)++;
+			arr_return[i] = ft_strdup(head[i]);
+			i++;
 		}
-		
+		free_arr(&head);
+		while (i < len)
+			arr_return[i++] = ft_strdup(arr[j++]);
+		arr_return[i] = 0;
+		return (arr_return);
 	}
+	return (free_arr(&head), arr_strdup (arr));
 }
 
 int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
@@ -584,17 +622,21 @@ int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
     while (i < len)
     {
         arr_tmp = ft_special_split(argv[i], '\'', '\\');
-		//  trim every str in arr and replace it by trim(str + 1) if trim returned = NULL && str + 1 != NULL
+
+	
 		trim_array(&arr_tmp);
+		// read_arr (arr_tmp);
 		arr = handle_args(arr_tmp);
+		free_arr (&arr_tmp);
 		if (!arr)
 			return (ft_errno("malloc"), 0);
         node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
-			return (free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
+			return (free (path), free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
 		add_back_list(head, node);
         i++;
     }
+	free (path);
 	return (1);
 }
 
@@ -658,7 +700,6 @@ void	processing(t_data **cpy,  char **env, int fdo)
 		ft_errno("execve failed");
 }
 
-// have to update the wait of pid and make the parent last thing and only child who excve cmds , make all pids as an array to make the wait easier and logical
 void	processing_cmds(t_data **head_cmd, char **env)
 {
 	t_data *cpy;
@@ -700,12 +741,15 @@ int main(int ac, char **av, char **env)
 	int fd[2];
 
 	head_cmd = NULL;
-    if (ac >= 5)
+    if (ac == 5)
 	{
         if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
             if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
 			{
+
+			system("leaks -quiet pipex");
+			// exit (1);
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);
 			}
@@ -716,5 +760,5 @@ int main(int ac, char **av, char **env)
 			ft_errno("incorrect files");
 	}
 	else
-		ft_errno("few arguments");
+		ft_errno("few arguments or more");
 }
