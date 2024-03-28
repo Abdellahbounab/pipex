@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:05:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 21:51:48 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/28 22:37:53 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ int					ft_strncmp(char *str, char *cmp, int len);
 
 int					free_list(t_data **head);
 
-void				ft_errno(char *str);
+void				ft_errno(char *str, int error);
 //have to mpdify it to get an int where we can update the exit function
 
 char				*ft_strjoin(char const *s1, char const *s2);

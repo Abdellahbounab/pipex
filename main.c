@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:08:50 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 21:51:32 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/28 22:42:14 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,93 +37,6 @@ void	read_lst(t_data *lst)
 		read_arr(lst->arr_cmd);
 		lst = lst->next;
 	}
-}
-
-int	ft_strlen(char *s) //outils 1
-{
-	int	i;
-
-	i = 0;
-	while (s && s[i++])
-		;
-	return (i - 1);
-}
-
-char	**free_arr(char ***array)
-{
-	int	i;
-
-	i = 0;
-	while (array && *array && (*array)[i])
-	{
-		free((*array)[i]);
-		i++;
-	}
-	free(*array);
-	return (NULL);
-}
-
-char	*ft_strjoin(char const *s1, char const *s2) //outils 2
-{
-	char	*joined;
-	size_t	total_len;
-	size_t	i;
-
-	i = 0;
-	total_len = ft_strlen((char *)s1) + ft_strlen((char *)s2);
-	joined = (char *)malloc(sizeof(char) * total_len + 1);
-	if (!joined)
-		return (NULL);
-	while (i < total_len)
-	{
-		if (*s1)
-			*(joined + i) = *((char *)s1++);
-		else
-			*(joined + i) = *((char *)s2++);
-		i++;
-	}
-	*(joined + i) = 0;
-	return (joined);
-}
-
-void	ft_errno(char *str)
-//have to mpdify it to get an int where we can update the exit function
-{
-	write(2, "\033[31mError :", 12);
-	write(2, str, ft_strlen(str));
-	write(2, "\033[0m\n", 5);
-	exit(EXIT_FAILURE);
-}
-
-int	free_list(t_data **head) //list 4
-{
-	t_data	*tmp;
-
-	while (*head)
-	{
-		tmp = (*head)->next;
-		free_arr(&(*head)->arr_cmd);
-		free(*head);
-		*head = tmp;
-	}
-	return (1);
-}
-
-int	ft_strncmp(char *str, char *cmp, int len) //outils 3
-{
-	int	i;
-
-	i = 0;
-	while (str && cmp && i < len)
-	{
-		if (str[i] != cmp[i])
-			return (0);
-		i++;
-	}
-	i--;
-	if (!(str[i] - cmp[i]))
-		return (1);
-	return (0);
 }
 
 static int	get_words(char const *s, char c, int *index) //ft_split
@@ -164,39 +77,6 @@ static int	ft_strsdup(char **array, const char *s, int len) //ft_split
 	arr[i] = 0;
 	*array = arr;
 	return (1);
-}
-
-char	*ft_strdup(char *s) //outils 4
-{
-	int		i;
-	int		len;
-	char	*arr;
-
-	i = -1;
-	len = 0;
-	if (s)
-	{
-		len = ft_strlen(s);
-		arr = (char *)malloc(sizeof(char) * (len + 1));
-		if (!arr)
-			return (0);
-		while (++i < len && s[i])
-			arr[i] = s[i];
-		arr[i] = 0;
-		return (arr);
-	}
-	return (0);
-}
-
-char	**free_split(char ***array, int index)
-{
-	int	i;
-
-	i = 0;
-	while (i < index)
-		free((*array)[i++]);
-	free(*array);
-	return (NULL);
 }
 
 char	**ft_split(char const *s, char c)
@@ -276,61 +156,6 @@ char	*get_flags(char **arr)
 	return (str);
 }
 
-int	get_arr_len(char **cmd) //arr 1
-{
-	int	i;
-
-	i = 0;
-	while (cmd && cmd[i])
-		i++;
-	return (i);
-}
-
-t_data	*get_cmd(char **arr, char *paths, int file_in, int file_out) //list 2
-{
-	int		index_path;
-	char	**path_arr;
-	char	*updated;
-	t_data	*node;
-
-	path_arr = ft_split(paths, ':');
-	updated = check_path(arr[0], path_arr, &index_path);
-	if (path_arr && updated)
-	{
-		node = (t_data *)malloc(sizeof(t_data));
-		if (node)
-		{
-			if (index_path != -1)
-			{
-				node->cmd_path = ft_strdup(path_arr[index_path]);
-				if (!node->cmd_path)
-					return (free(updated), free(node), NULL);
-				node->cmd = ft_strjoin(node->cmd_path, updated);
-			}
-			else
-			{
-				node->cmd_path = NULL;
-				node->cmd = ft_strdup(updated);
-			}
-			free_arr(&path_arr);
-			if (!node->cmd)
-				return (free(updated), free(node->cmd_path), free(node), NULL);
-			node->arr_cmd = arr;
-			if (!node->arr_cmd)
-				return (free(node->cmd), free(updated), free(node), NULL);
-			node->parent = 0;
-			node->fd_in = file_in;
-			node->fd_out = file_out;
-			node->next = NULL;
-			return (free(updated), node);
-		}
-		else
-			return (free(updated), free_arr(&path_arr), NULL);
-	}
-	else
-		return (free(updated), free_arr(&path_arr), ft_errno("failed command"),
-			NULL);
-}
 
 char	*get_path(char **env)
 {
@@ -346,33 +171,6 @@ char	*get_path(char **env)
 	return (NULL);
 }
 
-void	add_back_list(t_data **lst, t_data *newlst)
-{
-	t_data	*tmp;
-
-	if (!*lst)
-		*lst = newlst;
-	else
-	{
-		tmp = *lst;
-		while (tmp->next)
-			tmp = tmp->next;
-		tmp->next = newlst;
-	}
-}
-
-int	strlen_lst(t_data *head) //list 1
-{
-	int	len;
-
-	len = 0;
-	while (head)
-	{
-		head = head->next;
-		len++;
-	}
-	return (len);
-}
 
 int	has_special(char *str, int *start, int *end, char c)
 {
@@ -492,35 +290,6 @@ char	*ft_strtrim(char const *s1, char const *set)
 	return (trim);
 }
 
-void	trim_array(char ***arr) //arr 2
-{
-	int		i;
-	int		j;
-	char	**arr_cpy;
-	char	*tmp;
-
-	i = 0;
-	j = 0;
-	arr_cpy = *arr;
-	while (arr_cpy[i])
-	{
-		tmp = arr_cpy[i];
-		arr_cpy[j] = ft_strtrim(tmp, " ");
-		if (!*arr_cpy[j])
-		{
-			free(arr_cpy[j]);
-			arr_cpy[j] = NULL;
-			j--;
-		}
-		free(tmp);
-		tmp = NULL;
-		j++;
-		i++;
-	}
-	while (j < i)
-		arr_cpy[j++] = 0;
-}
-
 char	**arr_strdup(char **str)
 {
 	char	**re;
@@ -578,7 +347,7 @@ int	correct_commandes(char **argv, t_data **head, char **env, int *fd)
 	i = 2;
 	path = get_path(env);
 	if (!path)
-		return (ft_errno("path invalid"), 0);
+		return (ft_errno("path invalid", 1), 0);
 	while (argv[i] && argv[i + 1])
 	{
 		arr_tmp = ft_special_split(argv[i], '\'', '\\');
@@ -586,7 +355,7 @@ int	correct_commandes(char **argv, t_data **head, char **env, int *fd)
 		arr = handle_args(arr_tmp);
 		free_arr(&arr_tmp);
 		if (!arr)
-			return (ft_errno("malloc"), 0);
+			return (ft_errno("malloc", 1), 0);
 		node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
 			return (free(path), free_list(head), 0);
@@ -609,19 +378,6 @@ int	correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
 			return (close(*fd_in), 0);
 	}
 	return (0);
-}
-
-t_data	*get_list(t_data *head, int index) //list 3
-{
-	int	i;
-
-	i = 0;
-	while (head && i < index)
-	{
-		head = head->next;
-		i++;
-	}
-	return (head);
 }
 
 void	last_process(t_data **head_cmd)
@@ -654,7 +410,7 @@ void	processing(t_data **cpy, char **env, int fdo)
 	}
 	if ((*cpy)->cmd && (*cpy)->arr_cmd && execve((*cpy)->cmd, (*cpy)->arr_cmd,
 			env) == -1)
-		ft_errno("execve failed");
+		ft_errno("execve failed", 127);
 }
 
 void	processing_cmds(t_data **head_cmd, char **env)
@@ -667,7 +423,7 @@ void	processing_cmds(t_data **head_cmd, char **env)
 	while (cpy)
 	{
 		if (pipe(fds) == -1)
-			ft_errno("pid -1"); //update this error to free the leaks
+			ft_errno("pid -1", -1); //update this error to free the leaks
 		pid = fork();
 		if (pid != -1 && !pid)
 			processing(&cpy, env, fds[1]);
@@ -684,7 +440,7 @@ void	processing_cmds(t_data **head_cmd, char **env)
 			last_process(head_cmd);
 			free_list(head_cmd);
 			close(fds[0]);
-			ft_errno("pid -1");
+			ft_errno("pid -1", -1);
 		}
 		close(fds[1]);
 		cpy = cpy->next;
@@ -708,11 +464,11 @@ int	main(int ac, char **av, char **env)
 				write(1, "\033[32mSuccess\033[0m\n", 17);
 			}
 			else
-				ft_errno("command failed");
+				ft_errno("command failed", 1);
 		}
 		else
-			ft_errno("incorrect files");
+			ft_errno("incorrect files", 1);
 	}
 	else
-		ft_errno("few arguments or more");
+		ft_errno("few arguments or more", 1);
 }
