@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/03/21 23:08:50 by abounab           #+#    #+#             */
+/*   Updated: 2024/03/28 21:51:32 by abounab          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "pipex.h"
 
@@ -5,31 +16,30 @@
 //github documentation : https://csnotes.medium.com/pipex-tutorial-42-project-4469f5dd5901
 //read about env && access && execv
 
-
-
-void read_arr(char **arr)
+void	read_arr(char **arr)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (arr[i])
 	{
-		printf("%p <<>>arr[%d] = %s<<\n",arr[i], i, arr[i]);
+		printf("%p <<>>arr[%d] = %s<<\n", arr[i], i, arr[i]);
 		i++;
 	}
 }
 
-void read_lst(t_data *lst)
+void	read_lst(t_data *lst)
 {
 	while (lst)
 	{
-		printf("(%s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd, lst->fd_in, lst->fd_out, lst->parent);
+		printf("(%s, %s, (%d, %d), [%d] ---> ", lst->cmd_path, lst->cmd,
+			lst->fd_in, lst->fd_out, lst->parent);
 		read_arr(lst->arr_cmd);
-		lst = lst -> next;
+		lst = lst->next;
 	}
 }
 
-int ft_strlen(char *s)
+int	ft_strlen(char *s) //outils 1
 {
 	int	i;
 
@@ -53,7 +63,7 @@ char	**free_arr(char ***array)
 	return (NULL);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(char const *s1, char const *s2) //outils 2
 {
 	char	*joined;
 	size_t	total_len;
@@ -61,7 +71,7 @@ char	*ft_strjoin(char const *s1, char const *s2)
 
 	i = 0;
 	total_len = ft_strlen((char *)s1) + ft_strlen((char *)s2);
-	joined = (char *) malloc(sizeof(char) * total_len + 1);
+	joined = (char *)malloc(sizeof(char) * total_len + 1);
 	if (!joined)
 		return (NULL);
 	while (i < total_len)
@@ -76,17 +86,18 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	return (joined);
 }
 
-void ft_errno(char *str)//have to mpdify it to get an int where we can update the exit function
+void	ft_errno(char *str)
+//have to mpdify it to get an int where we can update the exit function
 {
-	write (2, "\033[31mError :", 12);
-	write (2, str, ft_strlen(str));
-	write (2, "\033[0m\n", 5);
-	exit (EXIT_FAILURE);
+	write(2, "\033[31mError :", 12);
+	write(2, str, ft_strlen(str));
+	write(2, "\033[0m\n", 5);
+	exit(EXIT_FAILURE);
 }
 
-int free_list(t_data **head)
+int	free_list(t_data **head) //list 4
 {
-	t_data *tmp;
+	t_data	*tmp;
 
 	while (*head)
 	{
@@ -98,7 +109,7 @@ int free_list(t_data **head)
 	return (1);
 }
 
-int	ft_strncmp(char *str, char *cmp, int len)
+int	ft_strncmp(char *str, char *cmp, int len) //outils 3
 {
 	int	i;
 
@@ -117,8 +128,8 @@ int	ft_strncmp(char *str, char *cmp, int len)
 
 static int	get_words(char const *s, char c, int *index) //ft_split
 {
-	int		counter;
-	int		found;
+	int	counter;
+	int	found;
 
 	counter = 0;
 	if (!s)
@@ -145,7 +156,7 @@ static int	ft_strsdup(char **array, const char *s, int len) //ft_split
 	char	*arr;
 
 	i = -1;
-	arr = (char *) malloc (sizeof(char) * (len + 1));
+	arr = (char *)malloc(sizeof(char) * (len + 1));
 	if (!arr)
 		return (0);
 	while (++i < len && s[i])
@@ -155,7 +166,7 @@ static int	ft_strsdup(char **array, const char *s, int len) //ft_split
 	return (1);
 }
 
-char	*ft_strdup(char *s)
+char	*ft_strdup(char *s) //outils 4
 {
 	int		i;
 	int		len;
@@ -166,7 +177,7 @@ char	*ft_strdup(char *s)
 	if (s)
 	{
 		len = ft_strlen(s);
-		arr = (char *) malloc (sizeof(char) * (len + 1));
+		arr = (char *)malloc(sizeof(char) * (len + 1));
 		if (!arr)
 			return (0);
 		while (++i < len && s[i])
@@ -197,7 +208,7 @@ char	**ft_split(char const *s, char c)
 
 	i = -1;
 	words = 0;
- 	array = (char **) malloc (sizeof(char *) * get_words(s, c, &words));
+	array = (char **)malloc(sizeof(char *) * get_words(s, c, &words));
 	if (!s || !array)
 		return (NULL);
 	while (++i < words)
@@ -217,10 +228,10 @@ char	**ft_split(char const *s, char c)
 	return (array);
 }
 
-char *check_path(char *str ,char **paths, int *len)
+char	*check_path(char *str, char **paths, int *len)
 {
-	char *cpy;
-	char *updated;
+	char	*cpy;
+	char	*updated;
 
 	*len = 0;
 	if (str && paths)
@@ -242,13 +253,13 @@ char *check_path(char *str ,char **paths, int *len)
 	return (0);
 }
 
-char *get_flags(char **arr)
+char	*get_flags(char **arr)
 {
-	int i = 1;
-	char *str;
-	char *cpy;
+	int		i;
+	char	*str;
+	char	*cpy;
 
-
+	i = 1;
 	str = NULL;
 	if (arr[i])
 		str = ft_strdup(arr[i++]);
@@ -265,9 +276,9 @@ char *get_flags(char **arr)
 	return (str);
 }
 
-int get_arr_len(char **cmd)
+int	get_arr_len(char **cmd) //arr 1
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (cmd && cmd[i])
@@ -275,49 +286,18 @@ int get_arr_len(char **cmd)
 	return (i);
 }
 
-
-char **get_arr_cmd(char **cmd)
+t_data	*get_cmd(char **arr, char *paths, int file_in, int file_out) //list 2
 {
-	int len;
-	char **arr;
-	int i;
-
-	i = 0;
-	len = get_arr_len(cmd);
-	// have to update this arr** to contain every flag in its own memory address:
-	arr = (char **) malloc (sizeof(char *) * len + 1);
-	if (!arr)
-		return (NULL);
-	arr[i] = ft_strdup(cmd[i]);
-	while (i < len)
-	if (arr[0])
-	{
-		if (len > 2)
-		{
-			arr[1] = ft_strdup(cmd[i]);
-			if (!arr[1])
-				return (NULL);
-		}
-		arr[len - 1] = 0;
-		return (arr);
-	}
-	else
-		ft_errno("malloc");
-	return (NULL);
-}
-
-t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
-{
-	int index_path;
-	char **path_arr;
-	char *updated;
-	t_data *node;
+	int		index_path;
+	char	**path_arr;
+	char	*updated;
+	t_data	*node;
 
 	path_arr = ft_split(paths, ':');
 	updated = check_path(arr[0], path_arr, &index_path);
 	if (path_arr && updated)
 	{
-		node = (t_data *) malloc (sizeof(t_data));
+		node = (t_data *)malloc(sizeof(t_data));
 		if (node)
 		{
 			if (index_path != -1)
@@ -334,7 +314,7 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			}
 			free_arr(&path_arr);
 			if (!node->cmd)
-						return (free(updated), free(node->cmd_path), free(node), NULL);
+				return (free(updated), free(node->cmd_path), free(node), NULL);
 			node->arr_cmd = arr;
 			if (!node->arr_cmd)
 				return (free(node->cmd), free(updated), free(node), NULL);
@@ -348,12 +328,13 @@ t_data *get_cmd(char **arr, char *paths, int file_in, int file_out)
 			return (free(updated), free_arr(&path_arr), NULL);
 	}
 	else
-		return (free(updated), free_arr(&path_arr), ft_errno("failed command"), NULL);
+		return (free(updated), free_arr(&path_arr), ft_errno("failed command"),
+			NULL);
 }
 
-char *get_path(char **env)
+char	*get_path(char **env)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (env[i])
@@ -374,15 +355,15 @@ void	add_back_list(t_data **lst, t_data *newlst)
 	else
 	{
 		tmp = *lst;
-		while (tmp -> next)
-			tmp = tmp -> next;
-		tmp -> next = newlst;
+		while (tmp->next)
+			tmp = tmp->next;
+		tmp->next = newlst;
 	}
 }
 
-int strlen_lst(t_data *head)
+int	strlen_lst(t_data *head) //list 1
 {
-	int len;
+	int	len;
 
 	len = 0;
 	while (head)
@@ -393,7 +374,7 @@ int strlen_lst(t_data *head)
 	return (len);
 }
 
-int has_special(char *str, int *start, int *end, char c)
+int	has_special(char *str, int *start, int *end, char c)
 {
 	while (*start < *end)
 	{
@@ -407,15 +388,15 @@ int has_special(char *str, int *start, int *end, char c)
 	return (0);
 }
 
-char *ft_strdup_len(char *str, int len)
+char	*ft_strdup_len(char *str, int len)
 {
-	char *cpy;
-	int i;
+	char	*cpy;
+	int		i;
 
 	i = 0;
 	if (str && !*str)
 		return (ft_strdup(""));
-	cpy = (char *) malloc (sizeof(char) * (len + 1));
+	cpy = (char *)malloc(sizeof(char) * (len + 1));
 	if (!cpy)
 		return (NULL);
 	while (str && str[i] && i < len)
@@ -427,10 +408,10 @@ char *ft_strdup_len(char *str, int len)
 	return (cpy);
 }
 
-int count_char(char *str, char c)
+int	count_char(char *str, char c)
 {
-	int i;
-	int count;
+	int	i;
+	int	count;
 
 	i = 0;
 	count = 0;
@@ -443,7 +424,7 @@ int count_char(char *str, char c)
 	return (count);
 }
 
-char **ft_special_split(char *s, char c, char condition)
+char	**ft_special_split(char *s, char c, char condition)
 {
 	char	**array;
 	int		i;
@@ -452,24 +433,22 @@ char **ft_special_split(char *s, char c, char condition)
 
 	i = -1;
 	words = 0;
-	array = (char **) malloc (sizeof(char *) * get_words(s, c, &words));
+	array = (char **)malloc(sizeof(char *) * get_words(s, c, &words));
 	if (!array)
 		return (NULL);
 	while (++i < words)
 	{
 		len = 0;
-		array[i] = NULL;
 		while (*s && *s == c && *(s - 1) && *(s - 1) != condition)
 			s++;
-		while (*s)
+		while (*s && s++)
 		{
 			len++;
-			s++;
 			if (*s == c && *(s - 1) != condition)
-				break;
+				break ;
 		}
 		if (!ft_strsdup(&array[i], s - len, len))
-					return (free_split(&array, i));
+			return (free_split(&array, i));
 	}
 	return (array[words] = 0, array);
 }
@@ -500,7 +479,7 @@ char	*ft_strtrim(char const *s1, char const *set)
 		start++;
 	while (start != end && is_setted(s1[--end], set))
 		;
-	trim = (char *) malloc (sizeof(char) * (end - start + 1) + 1);
+	trim = (char *)malloc(sizeof(char) * (end - start + 1) + 1);
 	if (!trim)
 		return (0);
 	while (s1[start] && start <= end)
@@ -513,17 +492,16 @@ char	*ft_strtrim(char const *s1, char const *set)
 	return (trim);
 }
 
-void trim_array(char ***arr)
+void	trim_array(char ***arr) //arr 2
 {
-	int i;
-	int j;
-	char **arr_cpy;
-	char *tmp;
+	int		i;
+	int		j;
+	char	**arr_cpy;
+	char	*tmp;
 
 	i = 0;
 	j = 0;
 	arr_cpy = *arr;
-
 	while (arr_cpy[i])
 	{
 		tmp = arr_cpy[i];
@@ -543,112 +521,104 @@ void trim_array(char ***arr)
 		arr_cpy[j++] = 0;
 }
 
-char **arr_strdup (char **str)
+char	**arr_strdup(char **str)
 {
-	char **re;
-	int i;
+	char	**re;
+	int		i;
 
 	if (!str)
 		return (str);
-	re = malloc (sizeof (char *) * (get_arr_len (str) + 1));
+	re = malloc(sizeof(char *) * (get_arr_len(str) + 1));
 	if (!re)
 		return (re);
 	i = 0;
 	while (str[i])
 	{
-		re[i] = ft_strdup (str[i]);
+		re[i] = ft_strdup(str[i]);
 		i++;
 	}
-	re [i] = 0;
+	re[i] = 0;
 	return (re);
 }
 
-// it have to handle the spaces in the first args since it may contain two strings
-char **handle_args(char **arr)
+char	**handle_args(char **arr)
 {
-	int i;
-	int j;
-	int len;
-	char **head;
-	char **arr_return;
+	int		i;
+	int		j;
+	int		len;
+	char	**head;
+	char	**arr_return;
 
 	i = 0;
 	j = 1;
-	head = ft_split(arr[i], ' ');
+	head = ft_split(arr[i--], ' ');
 	len = get_arr_len(head);
 	if (len > 1)
 	{
 		len += get_arr_len(arr + 1);
-		arr_return = (char **) malloc (sizeof(char *) * (len + 1));
-		while (head[i])
-		{
+		arr_return = (char **)malloc(sizeof(char *) * (len + 1));
+		while (head[++i])
 			arr_return[i] = ft_strdup(head[i]);
-			i++;
-		}
 		free_arr(&head);
 		while (i < len)
 			arr_return[i++] = ft_strdup(arr[j++]);
-		arr_return[i] = 0;
-		return (arr_return);
+		return (arr_return[i] = 0, arr_return);
 	}
-	return (free_arr(&head), arr_strdup (arr));
+	return (free_arr(&head), arr_strdup(arr));
 }
 
-int correct_commandes(char **argv, int len, t_data **head, char **env, int *fd)
+int	correct_commandes(char **argv, t_data **head, char **env, int *fd) 
 {
-    int i;
-	char **arr;
-	char **arr_tmp;
-	t_data *node;
-	char *path;
+	int		i;
+	char	**arr;
+	char	**arr_tmp;
+	t_data	*node;
+	char	*path;
 
-    i = 2;
-	path = get_path(env);	//getting path through the path got by get_path
+	i = 2;
+	path = get_path(env);
 	if (!path)
 		return (ft_errno("path invalid"), 0);
-    while (i < len)
-    {
-        arr_tmp = ft_special_split(argv[i], '\'', '\\');
-
-	
+	while (argv[i] && argv[i + 1])
+	{
+		arr_tmp = ft_special_split(argv[i], '\'', '\\');
 		trim_array(&arr_tmp);
-		// read_arr (arr_tmp);
 		arr = handle_args(arr_tmp);
-		free_arr (&arr_tmp);
+		free_arr(&arr_tmp);
 		if (!arr)
 			return (ft_errno("malloc"), 0);
-        node = get_cmd(arr, path, *fd, *(fd + 1));
+		node = get_cmd(arr, path, *fd, *(fd + 1));
 		if (!node)
-			return (free (path), free_list(head), 0);	//have to free all linked list (head & arr) & return ft_errno
+			return (free(path), free_list(head), 0);
 		add_back_list(head, node);
-        i++;
-    }
-	free (path);
-	return (1);
+		i++;
+	}
+	return (free(path), 1);
 }
 
-int correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
+int	correct_files(char *file_in, char *file_out, int *fd_in, int *fd_out)
 {
-    *fd_in = open(file_in, O_RDONLY);
-    *fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
-    if (*fd_in != -1)
+	*fd_in = open(file_in, O_RDONLY);
+	*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
+			S_IRUSR | S_IWUSR | S_IRGRP);
+	if (*fd_in != -1)
 	{
-        if (*fd_out != -1)
-            return (1);
+		if (*fd_out != -1)
+			return (1);
 		else
 			return (close(*fd_in), 0);
 	}
-    return (0);
+	return (0);
 }
 
-t_data *get_list(t_data *head, int index)
+t_data	*get_list(t_data *head, int index) //list 3
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (head && i < index)
 	{
-		head = head -> next;
+		head = head->next;
 		i++;
 	}
 	return (head);
@@ -656,12 +626,12 @@ t_data *get_list(t_data *head, int index)
 
 void	last_process(t_data **head_cmd)
 {
-	t_data *cpy;
+	t_data	*cpy;
 
 	cpy = *head_cmd;
 	if (!cpy)
 		return ;
-	while (cpy -> next)
+	while (cpy->next)
 	{
 		close(cpy->fd_in);
 		close(cpy->fd_out);
@@ -672,32 +642,32 @@ void	last_process(t_data **head_cmd)
 	}
 }
 
-void	processing(t_data **cpy,  char **env, int fdo)
+void	processing(t_data **cpy, char **env, int fdo)
 {
-	// read_arr((*cpy)->arr_cmd);
 	dup2((*cpy)->fd_in, 0);
 	if ((*cpy)->next)
 		dup2(fdo, 1);
-	else 
+	else
 	{
 		close(fdo);
 		dup2((*cpy)->fd_out, 1);
 	}
-	if ((*cpy)->cmd && (*cpy)->arr_cmd && execve((*cpy)->cmd, (*cpy)->arr_cmd, env) == -1)
+	if ((*cpy)->cmd && (*cpy)->arr_cmd && execve((*cpy)->cmd, (*cpy)->arr_cmd,
+			env) == -1)
 		ft_errno("execve failed");
 }
 
 void	processing_cmds(t_data **head_cmd, char **env)
 {
-	t_data *cpy;
-	int pid;
-	int fds[2];
+	t_data	*cpy;
+	int		pid;
+	int		fds[2];
 
 	cpy = *head_cmd;
 	while (cpy)
 	{
 		if (pipe(fds) == -1)
-			ft_errno("pid -1");//update this error to free the leaks
+			ft_errno("pid -1"); //update this error to free the leaks
 		pid = fork();
 		if (pid != -1 && !pid)
 			processing(&cpy, env, fds[1]);
@@ -722,17 +692,17 @@ void	processing_cmds(t_data **head_cmd, char **env)
 	last_process(head_cmd);
 }
 
-int main(int ac, char **av, char **env)
+int	main(int ac, char **av, char **env)
 {
-    t_data *head_cmd;
-	int fd[2];
+	t_data	*head_cmd;
+	int		fd[2];
 
 	head_cmd = NULL;
-    if (ac == 5)
+	if (ac == 5)
 	{
-        if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
+		if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
-            if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
+			if (correct_commandes(av, &head_cmd, env, fd))
 			{
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);
