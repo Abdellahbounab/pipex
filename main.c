@@ -1,24 +1,11 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdlib.h>
 
+#include "pipex.h"
 
 //github example : https://github.com/gabcollet/pipex/tree/master
 //github documentation : https://csnotes.medium.com/pipex-tutorial-42-project-4469f5dd5901
 //read about env && access && execv
 
-typedef struct s_data{
-    char *cmd_path;
-	char **arr_cmd;
-	char *cmd;
-	int parent;
-	int fd_out;
-	int fd_in;
-	struct s_data *next;
-}   t_data;
+
 
 void read_arr(char **arr)
 {
@@ -89,7 +76,7 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	return (joined);
 }
 
-void ft_errno(char *str)
+void ft_errno(char *str)//have to mpdify it to get an int where we can update the exit function
 {
 	write (2, "\033[31mError :", 12);
 	write (2, str, ft_strlen(str));
@@ -378,18 +365,18 @@ char *get_path(char **env)
 	return (NULL);
 }
 
-void	add_back_list(t_data **lst, t_data *new)
+void	add_back_list(t_data **lst, t_data *newlst)
 {
 	t_data	*tmp;
 
 	if (!*lst)
-		*lst = new;
+		*lst = newlst;
 	else
 	{
 		tmp = *lst;
 		while (tmp -> next)
 			tmp = tmp -> next;
-		tmp -> next = new;
+		tmp -> next = newlst;
 	}
 }
 
@@ -747,9 +734,6 @@ int main(int ac, char **av, char **env)
 		{
             if (correct_commandes(av, ac - 1, &head_cmd, env, fd))
 			{
-
-			system("leaks -quiet pipex");
-			// exit (1);
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);
 			}
