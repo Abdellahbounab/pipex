@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:05:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 22:37:53 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/29 21:05:22 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,18 +33,6 @@ typedef struct s_data
 
 void				processing_cmds(t_data **head_cmd, char **env);
 
-void				processing(t_data **cpy, char **env, int fdo);
-
-void				last_process(t_data **head_cmd);
-
-t_data				*get_list(t_data *head, int index);
-
-int					correct_files(char *file_in, char *file_out, int *fd_in,
-						int *fd_out);
-
-int					correct_commandes(char **argv, t_data **head,
-						char **env, int *fd);
-
 char				**handle_args(char **arr);
 
 char				**arr_strdup(char **str);
@@ -55,26 +43,14 @@ char				*ft_strtrim(char const *s1, char const *set);
 
 char				**ft_special_split(char *s, char c, char condition);
 
-int					count_char(char *str, char c);
-
 char				*ft_strdup_len(char *str, int len);
 
-int					has_special(char *str, int *start, int *end, char c);
-
-int					strlen_lst(t_data *head);
+t_data				*get_cmd(char **arr, char **path_arr,
+						int file_in, int file_out);
 
 void				add_back_list(t_data **lst, t_data *newlst);
 
-char				*get_path(char **env);
-
-t_data				*get_cmd(char **arr, char *paths, int file_in,
-						int file_out);
-
 int					get_arr_len(char **cmd);
-
-char				*get_flags(char **arr);
-
-char				*check_path(char *str, char **paths, int *len);
 
 char				**ft_split(char const *s, char c);
 

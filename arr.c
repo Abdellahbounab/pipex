@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:32:56 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 22:33:52 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/29 21:09:33 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,26 @@ int	get_arr_len(char **cmd)
 	while (cmd && cmd[i])
 		i++;
 	return (i);
+}
+
+char	**arr_strdup(char **str)
+{
+	char	**re;
+	int		i;
+
+	if (!str)
+		return (str);
+	re = malloc(sizeof(char *) * (get_arr_len(str) + 1));
+	if (!re)
+		return (re);
+	i = 0;
+	while (str[i])
+	{
+		re[i] = ft_strdup(str[i]);
+		i++;
+	}
+	re[i] = 0;
+	return (re);
 }
 
 void	trim_array(char ***arr)

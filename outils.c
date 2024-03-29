@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:34:30 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 22:35:43 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/29 20:27:29 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,4 +82,24 @@ char	*ft_strdup(char *s)
 		return (arr);
 	}
 	return (0);
+}
+
+char	*ft_strdup_len(char *str, int len)
+{
+	char	*cpy;
+	int		i;
+
+	i = 0;
+	if (str && !*str)
+		return (ft_strdup(""));
+	cpy = (char *)malloc(sizeof(char) * (len + 1));
+	if (!cpy)
+		return (NULL);
+	while (str && str[i] && i < len)
+	{
+		cpy[i] = str[i];
+		i++;
+	}
+	cpy[i] = 0;
+	return (cpy);
 }

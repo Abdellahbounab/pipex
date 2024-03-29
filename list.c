@@ -6,36 +6,38 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:38:54 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/28 22:40:44 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/29 21:09:07 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-int	strlen_lst(t_data *head)
+static char	*check_path(char *str, char **paths, int *len)
 {
-	int	len;
+	char	*cpy;
+	char	*updated;
 
-	len = 0;
-	while (head)
+	*len = 0;
+	if (str && paths)
 	{
-		head = head->next;
-		len++;
+		if (access(str, X_OK) != -1)
+			return (*len = -1, ft_strdup(str));
+		updated = ft_strjoin("/", str);
+		if (updated)
+		{
+			while (paths[*len])
+			{
+				cpy = ft_strjoin(paths[*len], updated);
+				if (access(cpy, X_OK) != -1)
+					return (free(cpy), updated);
+				free(cpy);
+				cpy = NULL;
+				(*len)++;
+			}
+		}
+		return (0);
 	}
-	return (len);
-}
-
-t_data	*get_list(t_data *head, int index)
-{
-	int	i;
-
-	i = 0;
-	while (head && i < index)
-	{
-		head = head->next;
-		i++;
-	}
-	return (head);
+	return (0);
 }
 
 void	add_back_list(t_data **lst, t_data *newlst)
@@ -53,42 +55,41 @@ void	add_back_list(t_data **lst, t_data *newlst)
 	}
 }
 
-t_data	*get_cmd(char **arr, char *paths, int file_in, int file_out)
+static t_data	*create_node(int file_in, int file_out, char **arr)
 {
-	int		index_path;
-	char	**path_arr;
+	t_data	*node;
+
+	node = (t_data *)malloc(sizeof(t_data));
+	if (!node)
+		return (NULL);
+	node->parent = 0;
+	node->fd_in = file_in;
+	node->fd_out = file_out;
+	node->next = NULL;
+	node->cmd = NULL;
+	node->arr_cmd = arr;
+	return (node);
+}
+
+t_data	*get_cmd(char **arr, char **path_arr, int file_in, int file_out)
+{
+	int		i;
 	char	*updated;
 	t_data	*node;
 
-	path_arr = ft_split(paths, ':');
-	updated = check_path(arr[0], path_arr, &index_path);
+	updated = check_path(arr[0], path_arr, &i);
 	if (path_arr && updated)
 	{
-		node = (t_data *)malloc(sizeof(t_data));
+		node = create_node(file_in, file_out, arr);
 		if (node)
 		{
-			if (index_path != -1)
-			{
-				node->cmd_path = ft_strdup(path_arr[index_path]);
-				if (!node->cmd_path)
-					return (free(updated), free(node), NULL);
-				node->cmd = ft_strjoin(node->cmd_path, updated);
-			}
+			if (i != -1)
+				node->cmd = ft_strjoin(path_arr[i], updated);
 			else
-			{
-				node->cmd_path = NULL;
 				node->cmd = ft_strdup(updated);
-			}
 			free_arr(&path_arr);
 			if (!node->cmd)
-				return (free(updated), free(node->cmd_path), free(node), NULL);
-			node->arr_cmd = arr;
-			if (!node->arr_cmd)
-				return (free(node->cmd), free(updated), free(node), NULL);
-			node->parent = 0;
-			node->fd_in = file_in;
-			node->fd_out = file_out;
-			node->next = NULL;
+				return (free(updated), free(node), NULL);
 			return (free(updated), node);
 		}
 		else
@@ -96,5 +97,5 @@ t_data	*get_cmd(char **arr, char *paths, int file_in, int file_out)
 	}
 	else
 		return (free(updated), free_arr(&path_arr),
-			ft_errno("failed command", 1), NULL);
+			ft_errno("failed command", 127), NULL);
 }
