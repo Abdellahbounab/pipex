@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/29 21:20:15 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 21:27:54 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 22:56:39 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,22 @@ static char	*get_path(char **env)
 	return (NULL);
 }
 
+void	get_input(int fd, char *delimiter)
+{
+	char *ligne = NULL;
+
+	ligne = get_next_line(0);
+	printf("delimiter : %s(%d)[%s]\n", delimiter, fd, ligne);
+	while (ligne && !ft_strncmp(ligne, delimiter, ft_strlen(ligne) - 1))
+	{
+		write (0, "pipe :", 6);
+		write (fd, ligne, ft_strlen(ligne));
+		ligne = get_next_line(0); 
+	}
+	printf("(%d)\n", fd);
+	close(fd);
+}
+
 static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 {
 	int		i;
@@ -35,9 +51,12 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 	char	**arr_tmp;
 	t_data	*node;
 
-	i = 2;
+	i = 0;
 	if (!path)
 		return (ft_errno("path invalid", 1), 0);
+	if (*(fd + 2) > 1)
+		get_input(*(fd + 2) - 1, argv[i++]);
+	printf("step1\n");
 	while (argv[i] && argv[i + 1])
 	{
 		arr_tmp = ft_special_split(argv[i], '\'', '\\');
@@ -46,27 +65,28 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 		free_arr(&arr_tmp);
 		if (!arr)
 			return (free(path), ft_errno("malloc", 1), 0);
-		node = get_cmd(arr, ft_split(path, ':'), *fd, *(fd + 1));
+		node = get_cmd(arr, ft_split(path, ':'), fd);
 		if (!node)
 			return (free(path), free_list(head), 0);
 		add_back_list(head, node);
 		i++;
 	}
+	printf("step2\n");
 	return (free(path), 1);
-}
-
-int	heredocs(char *file_in)
-{
-	if (file_in && ft_strncmp(file_in, "here_doc", ft_strlen(file_in)))
-		return (1);
-	return (0);
 }
 
 static int	correct_files(char *file_in, char *file_out
 		, int *fd_in, int *fd_out)
 {
-	if (heredocs(file_in))
-		*fd_in = 0;
+	int fds[2];
+	int here_doc;
+
+	here_doc = 0;
+	if (ft_strncmp(file_in, "here_doc", ft_strlen(file_in)) && pipe(fds) != -1)
+	{
+		here_doc = fds[1];
+		*fd_in = fds[0];
+	}
 	else
 		*fd_in = open(file_in, O_RDONLY);
 	*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
@@ -74,7 +94,7 @@ static int	correct_files(char *file_in, char *file_out
 	if (*fd_in != -1)
 	{
 		if (*fd_out != -1)
-			return (1);
+			return (1 + here_doc);
 		else
 			return (close(*fd_in), 0);
 	}
@@ -84,14 +104,15 @@ static int	correct_files(char *file_in, char *file_out
 int	main(int ac, char **av, char **env)
 {
 	t_data	*head_cmd;
-	int		fd[2];
+	int		fd[3];//3rd element is for heredoc (if it is 0 means no file is correct/ if 1 means no heredoc / else means herdoc)
 
 	head_cmd = NULL;
 	if (ac >= 5)
-	{
-		if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
+	{ 
+		fd[2] = correct_files(av[1], av[ac - 1], &fd[0], &fd[1]);
+		if (fd[2])
 		{
-			if (correct_commandes(av, &head_cmd, get_path(env), fd))
+			if (correct_commandes(av + 2, &head_cmd, get_path(env), fd))
 			{
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);

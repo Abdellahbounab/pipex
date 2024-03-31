@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/02 19:30:01 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 22:32:05 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 16:09:43 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,9 @@
 
 char	*get_next_line(int fd);
 
-int	until_line(char *str);
+int		until_line(char *str);
 
-int	ft_strlcpy(char *dst, const char *src, int size);
+int		ft_strlcpy(char *dst, const char *src, int size);
 
 char	*ft_get_line(char *str);
 

@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:34:30 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 20:27:29 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 21:28:58 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,19 @@ int	ft_strlen(char *s)
 	return (i - 1);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*ft_strjoin(char *s1, char  *s2)
 {
 	char	*joined;
 	size_t	total_len;
 	size_t	i;
 
 	i = 0;
+	if (!s1 && !s2)
+		return (NULL);
+	if (!s1)
+		return (ft_strdup(s2));
+	if (!s2)
+		return (ft_strdup(s1));
 	total_len = ft_strlen((char *)s1) + ft_strlen((char *)s2);
 	joined = (char *)malloc(sizeof(char) * total_len + 1);
 	if (!joined)

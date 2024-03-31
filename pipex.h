@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:05:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 21:05:22 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 21:29:07 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,9 @@ typedef struct s_data
 {
 	char			*cmd_path;
 	char			**arr_cmd;
+	char			*delimiter;
 	char			*cmd;
+	int				here_doc;
 	int				parent;
 	int				fd_out;
 	int				fd_in;
@@ -45,8 +47,7 @@ char				**ft_special_split(char *s, char c, char condition);
 
 char				*ft_strdup_len(char *str, int len);
 
-t_data				*get_cmd(char **arr, char **path_arr,
-						int file_in, int file_out);
+t_data				*get_cmd(char **arr, char **path_arr, int *fd);
 
 void				add_back_list(t_data **lst, t_data *newlst);
 
@@ -65,7 +66,7 @@ int					free_list(t_data **head);
 void				ft_errno(char *str, int error);
 //have to mpdify it to get an int where we can update the exit function
 
-char				*ft_strjoin(char const *s1, char const *s2);
+char				*ft_strjoin(char *s1, char *s2);
 
 char				**free_arr(char ***array);
 

@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:08:50 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 21:10:54 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 16:58:45 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 	char	**arr_tmp;
 	t_data	*node;
 
-	i = 2;
+	i = 0;
 	if (!path)
 		return (ft_errno("path invalid", 1), 0);
 	while (argv[i] && argv[i + 1])
@@ -48,7 +48,7 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 		free_arr(&arr_tmp);
 		if (!arr)
 			return (free(path), ft_errno("malloc", 1), 0);
-		node = get_cmd(arr, ft_split(path, ':'), *fd, *(fd + 1));
+		node = get_cmd(arr, ft_split(path, ':'), fd);
 		if (!node)
 			return (free(path), free_list(head), 0);
 		add_back_list(head, node);
@@ -83,7 +83,7 @@ int	main(int ac, char **av, char **env)
 	{
 		if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
-			if (correct_commandes(av, &head_cmd, get_path(env), fd))
+			if (correct_commandes(av + 2, &head_cmd, get_path(env), fd))
 			{
 				processing_cmds(&head_cmd, env);
 				write(1, "\033[32mSuccess\033[0m\n", 17);

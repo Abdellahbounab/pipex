@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/01/03 18:58:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 22:32:12 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 16:11:33 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ char	*ft_read_buff(int fd, char *str)
 char	*ft_get_line(char *str)
 {
 	int		i;
-	int	len;
+	int		len;
 	char	*cpy;
 
 	i = 0;
@@ -96,33 +96,3 @@ char	*get_next_line(int fd)
 		return (free(str), str = NULL, NULL);
 	return (line);
 }
-
-// #include <stdio.h>
-// int main()
-// {
-// 	int fd = open("test.txt", O_RDONLY);
-// 	int i = 10;
-// 	char *ptr;
-
-// 	ptr = get_next_line(fd);
-// 	free(ptr);
-// 	ptr = get_next_line(fd);
-// 	free(ptr);
-// 	ptr = get_next_line(fd);
-// 	free(ptr);
-// 	ptr = get_next_line(fd);
-// 	free(ptr);
-// 	ptr = get_next_line(fd);
-// 	free(ptr);
-// 	// printf("%s",get_next_line(fd));
-// 	// printf("%s",get_next_line(fd));
-// 	// printf("%s",get_next_line(fd));
-// 	// printf("%s",get_next_line(fd));
-// 	// printf("%s",get_next_line(fd));
-
-// // 	while ((ptr = get_next_line(fd))){
-// // 	printf("%s",ptr);
-// // 	free(ptr);
-// // }
-// system("leaks a.out");
-// }

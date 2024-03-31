@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/28 22:38:54 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 21:09:07 by abounab          ###   ########.fr       */
+/*   Updated: 2024/03/30 16:46:02 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,15 +63,17 @@ static t_data	*create_node(int file_in, int file_out, char **arr)
 	if (!node)
 		return (NULL);
 	node->parent = 0;
+	node->here_doc = 0;
 	node->fd_in = file_in;
 	node->fd_out = file_out;
 	node->next = NULL;
 	node->cmd = NULL;
+	node->delimiter = NULL;
 	node->arr_cmd = arr;
 	return (node);
 }
 
-t_data	*get_cmd(char **arr, char **path_arr, int file_in, int file_out)
+t_data	*get_cmd(char **arr, char **path_arr, int *fd)
 {
 	int		i;
 	char	*updated;
@@ -80,7 +82,7 @@ t_data	*get_cmd(char **arr, char **path_arr, int file_in, int file_out)
 	updated = check_path(arr[0], path_arr, &i);
 	if (path_arr && updated)
 	{
-		node = create_node(file_in, file_out, arr);
+		node = create_node(*fd, *(fd + 1), arr);
 		if (node)
 		{
 			if (i != -1)
