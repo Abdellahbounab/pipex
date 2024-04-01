@@ -32,10 +32,11 @@ void	get_input(int fd, char *delimiter)
 {
 	char *ligne = NULL;
 
+	write (0, "> ", 2);
 	ligne = get_next_line(0);
-	printf("delimiter : %s(%d)[%s]\n", delimiter, fd, ligne);
 	while (ligne && !ft_strncmp(ligne, delimiter, ft_strlen(ligne) - 1))
 	{
+		write (0, "> ", 2);
 		write (fd, ligne, ft_strlen(ligne));
 		ligne = get_next_line(0); 
 	}

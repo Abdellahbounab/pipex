@@ -7,7 +7,7 @@ MAIN = main.c
 
 SRCS = arr.c free.c list.c outils.c split.c args.c process.c
 
-SRCS_BNS = main_bonus.c get_next_line.c get_next_line_utils.c
+SRCS_BNS = main_bonus.c get_next_line_bonus.c get_next_line_utils.c
 
 OBJS = ${SRCS:.c=.o}
 

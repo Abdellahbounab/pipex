@@ -13,6 +13,14 @@
 #ifndef PIPEX_BONUS_H
 # define PIPEX_BONUS_H
 
-# include "get_next_line.h"
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 10
+# endif
+
+# include "pipex.h" 
+
+char	*get_next_line(int fd);
+
+int		ft_strlcpy(char *dst, const char *src, int size);
 
 #endif
