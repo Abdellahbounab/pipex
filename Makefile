@@ -30,7 +30,7 @@ ${NAME} : ${OBJS} ${OBJS_MAIN}
 bonus : ${NAME_BONUS}
 
 ${NAME_BONUS} : ${OBJS_BNS} ${OBJS}
-				${CC} ${CFLAGS} ${OBJS_BNS} ${OBJS} -o ${NAME_BONUS} -fsanitize=address -g
+				${CC} ${CFLAGS} ${OBJS_BNS} ${OBJS} -o ${NAME_BONUS}
 
 clean :
 		rm -rf ${OBJS} ${OBJS_MAIN} ${OBJS_BNS}

@@ -36,7 +36,6 @@ void	get_input(int fd, char *delimiter)
 	printf("delimiter : %s(%d)[%s]\n", delimiter, fd, ligne);
 	while (ligne && !ft_strncmp(ligne, delimiter, ft_strlen(ligne) - 1))
 	{
-		write (0, "pipe :", 6);
 		write (fd, ligne, ft_strlen(ligne));
 		ligne = get_next_line(0); 
 	}
@@ -56,7 +55,6 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 		return (ft_errno("path invalid", 1), 0);
 	if (*(fd + 2) > 1)
 		get_input(*(fd + 2) - 1, argv[i++]);
-	printf("step1\n");
 	while (argv[i] && argv[i + 1])
 	{
 		arr_tmp = ft_special_split(argv[i], '\'', '\\');
@@ -71,7 +69,6 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 		add_back_list(head, node);
 		i++;
 	}
-	printf("step2\n");
 	return (free(path), 1);
 }
 

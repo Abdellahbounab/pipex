@@ -22,7 +22,6 @@ static void	last_process(t_data **head_cmd)
 		return ;
 	while (cpy)
 	{
-		printf(">>(%d, %d)\n", cpy->fd_in, cpy->fd_out);
 		close(cpy->fd_in);
 		close(cpy->fd_out);
 		if (cpy->parent)
@@ -63,15 +62,10 @@ static void	processing_cmds_outils(t_data **node, int pid, int fd_zero, int fdo)
 	if (node)
 	{
 		close(fdo);
-		// (*node)->fd_out = fdo;
 		(*node)->parent = pid;
 		if ((*node)->next)
-		{
-			close((*node)->next->fd_in);
-			(*node)->next->fd_in = fd_zero;
-		}
-		else
-			close(fd_zero);
+			dup2(fd_zero, (*node)->next->fd_in);
+		close(fd_zero);
 	}
 }
 
