@@ -1,24 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   extra_bonus.c                           :+:      :+:    :+:   */
+/*   extra_outils_bonus.c                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/01/03 19:08:37 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/29 22:32:16 by abounab          ###   ########.fr       */
+/*   Created: 2024/04/01 22:36:43 by abounab           #+#    #+#             */
+/*   Updated: 2024/04/01 22:37:10 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex_bonus.h"
-
-
-
-
-//update the header , creating it again for both getnextline
-
-
-
 
 int	ft_strlcpy(char *dst, const char *src, int size)
 {

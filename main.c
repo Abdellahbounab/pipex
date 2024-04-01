@@ -6,12 +6,13 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:08:50 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/30 16:58:45 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/01 22:50:48 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
+//delete this reminder before pushing
 //read about env && access && execv
 
 static char	*get_path(char **env)
@@ -61,10 +62,10 @@ static int	correct_files(char *file_in, char *file_out
 		, int *fd_in, int *fd_out)
 {
 	*fd_in = open(file_in, O_RDONLY);
-	*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IRGRP);
 	if (*fd_in != -1)
 	{
+		*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
+				S_IRUSR | S_IWUSR | S_IRGRP);
 		if (*fd_out != -1)
 			return (1);
 		else
@@ -84,10 +85,7 @@ int	main(int ac, char **av, char **env)
 		if (correct_files(av[1], av[ac - 1], &fd[0], &fd[1]))
 		{
 			if (correct_commandes(av + 2, &head_cmd, get_path(env), fd))
-			{
-				processing_cmds(&head_cmd, env);
-				write(1, "\033[32mSuccess\033[0m\n", 17);
-			}
+				return (processing_cmds(&head_cmd, env));
 			else
 				ft_errno("command failed", 127);
 		}

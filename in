@@ -1,9 +1,0 @@
-total 80
-drwxr-xr-x   8 abounab  candidates    272 Mar 28 21:26 .
-drwxr-xr-x   7 abounab  candidates    238 Mar 26 23:52 ..
-drwxr-xr-x  12 abounab  candidates    408 Mar 21 23:11 .git
--rw-r--r--   1 abounab  candidates      0 Mar 28 21:26 in
--rw-r--r--   1 abounab  candidates  12260 Mar 28 21:26 main.c
--rw-r-----   1 abounab  candidates      0 Mar 28 21:26 out
--rwxr-xr-x   1 abounab  candidates  23008 Mar 28 21:26 pipex
--rw-r--r--   1 abounab  candidates   2771 Mar 28 21:26 pipex.h

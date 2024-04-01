@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/29 21:20:15 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/30 22:56:39 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/01 22:50:47 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ static char	*get_path(char **env)
 
 void	get_input(int fd, char *delimiter)
 {
-	char *ligne = NULL;
+	char	*ligne;
 
 	write (0, "> ", 2);
 	ligne = get_next_line(0);
@@ -76,19 +76,23 @@ static int	correct_commandes(char **argv, t_data **head, char *path, int *fd)
 static int	correct_files(char *file_in, char *file_out
 		, int *fd_in, int *fd_out)
 {
-	int fds[2];
-	int here_doc;
+	int	fds[2];
+	int	here_doc;
 
 	here_doc = 0;
 	if (ft_strncmp(file_in, "here_doc", ft_strlen(file_in)) && pipe(fds) != -1)
 	{
 		here_doc = fds[1];
 		*fd_in = fds[0];
+		*fd_out = open(file_out, O_CREAT | O_WRONLY | O_APPEND,
+				S_IRUSR | S_IWUSR | S_IRGRP);
 	}
 	else
+	{
 		*fd_in = open(file_in, O_RDONLY);
-	*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IRGRP);
+		*fd_out = open(file_out, O_CREAT | O_WRONLY | O_TRUNC,
+				S_IRUSR | S_IWUSR | S_IRGRP);
+	}
 	if (*fd_in != -1)
 	{
 		if (*fd_out != -1)
@@ -102,19 +106,16 @@ static int	correct_files(char *file_in, char *file_out
 int	main(int ac, char **av, char **env)
 {
 	t_data	*head_cmd;
-	int		fd[3];//3rd element is for heredoc (if it is 0 means no file is correct/ if 1 means no heredoc / else means herdoc)
+	int		fd[3];
 
 	head_cmd = NULL;
 	if (ac >= 5)
-	{ 
+	{
 		fd[2] = correct_files(av[1], av[ac - 1], &fd[0], &fd[1]);
-		if (fd[2])
+		if ((fd[2] > 1 && ac > 5) || fd[2] == 1)
 		{
 			if (correct_commandes(av + 2, &head_cmd, get_path(env), fd))
-			{
-				processing_cmds(&head_cmd, env);
-				write(1, "\033[32mSuccess\033[0m\n", 17);
-			}
+				return (processing_cmds(&head_cmd, env));
 			else
 				ft_errno("command failed", 127);
 		}

@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:05:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/03/30 21:29:07 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/01 22:50:10 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 # define PIPEX_H
 
 # include <fcntl.h>
-# include <stdio.h> //have to remembre it and the read funciton to debug
 # include <stdlib.h>
 # include <sys/types.h>
 # include <sys/wait.h>
@@ -33,7 +32,7 @@ typedef struct s_data
 	struct s_data	*next;
 }					t_data;
 
-void				processing_cmds(t_data **head_cmd, char **env);
+int					processing_cmds(t_data **head_cmd, char **env);
 
 char				**handle_args(char **arr);
 
@@ -64,7 +63,6 @@ int					ft_strncmp(char *str, char *cmp, int len);
 int					free_list(t_data **head);
 
 void				ft_errno(char *str, int error);
-//have to mpdify it to get an int where we can update the exit function
 
 char				*ft_strjoin(char *s1, char *s2);
 
