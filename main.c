@@ -6,14 +6,11 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:08:50 by abounab           #+#    #+#             */
-/*   Updated: 2024/04/01 22:50:48 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/02 18:01:10 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
-
-//delete this reminder before pushing
-//read about env && access && execv
 
 static char	*get_path(char **env)
 {

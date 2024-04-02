@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/21 23:05:59 by abounab           #+#    #+#             */
-/*   Updated: 2024/04/01 22:50:10 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/02 18:11:39 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 
 # include <fcntl.h>
 # include <stdlib.h>
-# include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
 
@@ -23,9 +22,7 @@ typedef struct s_data
 {
 	char			*cmd_path;
 	char			**arr_cmd;
-	char			*delimiter;
 	char			*cmd;
-	int				here_doc;
 	int				parent;
 	int				fd_out;
 	int				fd_in;

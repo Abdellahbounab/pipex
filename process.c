@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/29 20:38:28 by abounab           #+#    #+#             */
-/*   Updated: 2024/04/01 22:39:34 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/02 18:01:01 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ static int	last_process(t_data **head_cmd)
 		if (cpy->parent)
 		{
 			if (waitpid(cpy->parent, &status, 0) == -1)
-				exit(1);
+				return (WEXITSTATUS(status));
 		}
 		free_arr(&cpy->arr_cmd);
 		cpy = cpy->next;

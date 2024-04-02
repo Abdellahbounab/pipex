@@ -6,7 +6,7 @@
 /*   By: abounab <abounab@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/03/29 21:20:15 by abounab           #+#    #+#             */
-/*   Updated: 2024/04/01 22:50:47 by abounab          ###   ########.fr       */
+/*   Updated: 2024/04/02 18:14:49 by abounab          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,6 @@ void	get_input(int fd, char *delimiter)
 		write (fd, ligne, ft_strlen(ligne));
 		ligne = get_next_line(0); 
 	}
-	printf("(%d)\n", fd);
 	close(fd);
 }
 
@@ -120,7 +119,7 @@ int	main(int ac, char **av, char **env)
 				ft_errno("command failed", 127);
 		}
 		else
-			ft_errno("incorrect files", 1);
+			ft_errno("incorrect files or few args in here_doc", 1);
 	}
 	else
 		ft_errno("few arguments or more", 1);
