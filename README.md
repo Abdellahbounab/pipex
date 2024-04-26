@@ -6,15 +6,6 @@
 
 ---
 
-## 📜 Table of Contents
-
-- [About](#about)
-- [Checklist](#checklist)
-- [Getting Started](#getting_started)
-- [Notes](#notes)
-- [42 São Paulo](#ft_sp)
-- [Resources](#resources)
-
 ## 🧐 About <a name = "about"></a>
 
 In this projects we implement UNIX pipes and redirections, namely
