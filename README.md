@@ -1,26 +1,5 @@
 <h3 align="center">1337 MED - Pipex</h3>
 
-<div align="center">
-
-![License](https://img.shields.io/github/license/librity/ft_pipex?color=yellow)
-![Code size in bytes](https://img.shields.io/github/languages/code-size/librity/ft_pipex?color=blue)
-![Lines of code](https://img.shields.io/tokei/lines/github/librity/ft_pipex?color=blueviolet)
-![Top language](https://img.shields.io/github/languages/top/librity/ft_pipex?color=ff69b4)
-![Last commit](https://img.shields.io/github/last-commit/librity/ft_pipex?color=orange)
-
-</div>
-
-<div align="center">
-
-[![Build](https://github.com/librity/ft_pipex/actions/workflows/build.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/build.yml)
-[![Norminette v3](https://github.com/librity/ft_pipex/actions/workflows/norminette_v3.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/norminette_v3.yml)
-[![denisgodoy_pipex-tester](https://github.com/librity/ft_pipex/actions/workflows/denisgodoy_pipex-tester.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/denisgodoy_pipex-tester.yml)
-[![gsilva-v_pipextester](https://github.com/librity/ft_pipex/actions/workflows/gsilva-v_pipextester.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/gsilva-v_pipextester.yml)
-[![vfurmane_pipex-tester](https://github.com/librity/ft_pipex/actions/workflows/vfurmane_pipex-tester.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/vfurmane_pipex-tester.yml)
-[![yoo0lh_pipex_tester_42](https://github.com/librity/ft_pipex/actions/workflows/yoo0lh_pipex_tester_42.yml/badge.svg)](https://github.com/librity/ft_pipex/actions/workflows/yoo0lh_pipex_tester_42.yml)
-
-</div>
-
 <p align="center"> A simple implementation of UNIX <code>|</code>, <code><</code>, <code><<</code>, <code>></code> and <code>>></code> in pure C.
   <br>
 </p>
@@ -110,55 +89,6 @@ It's basically this with a parser and dynamic environment variables.
 - [x] Support `«` and `»` when the first parameter is "here_doc":
   - `./pipex here_doc LIMITER cmd cmd1 file`
   - `cmd << LIMITER | cmd1 >> file`
-
-## 🏁 Getting Started <a name = "getting_started"></a>
-
-### 🖥️ Installing
-
-Clone the repo and build with `make`:
-
-```bash
-$ git clone --recurse-submodules https://github.com/librity/ft_pipex.git
-$ cd ft_pipex
-$ make
-```
-
-It works exactly like `< infile cmd1 | cmd2 > outfile`:
-
-```bash
-./pipex infile "ls" "wc" outfile
-
-./pipex infile "ls -l" "wc -l" outfile
-./pipex infile "grep a1" "wc -w" outfile
-
-./pipex .gitignore "tr a b" "tr b c" outfile
-./pipex EOF "tr a b" "tr b c" outfile
-./pipex .gitignore "ping 8.8.8.8" "grep ms" outfile
-```
-
-### Bonus
-
-You can also compile the bonus implementation:
-
-```bash
-$ make bonus
-```
-
-It handles multiple pipes `< infile cmd1 | cmd2 | cmd3 | ... | cmdn > outfile`:
-
-```bash
-./pipex infile "grep a" "grep d" "grep s" outfile
-./pipex infile "ls -l" "grep a" "wc -l" outfile
-./pipex infile "cat" "tr a b" "tr b a" "tr a b" "tr b a" outfile
-```
-
-It also takes a heredoc as input `cmd1 << LIMITER | cmd2 >> file`:
-
-```bash
-./pipex here_doc l "grep a" "grep d" "grep s" outfile
-./pipex here_doc l "grep a" "wc -l" outfile
-./pipex here_doc x "cat" "tr a b" "tr c d"  outfile
-```
 
 ## 📝 Notes <a name = "notes"></a>
 
