@@ -1,4 +1,4 @@
-<h3 align="center">42 São Paulo - Pipex</h3>
+<h3 align="center">1337 MED - Pipex</h3>
 
 <div align="center">
 
